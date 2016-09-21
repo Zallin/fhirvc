@@ -51,17 +51,22 @@
                 :else (recur (rest keys)
                              (property-changed cur-key val-a val-b acc-hm))))))))             
 
+(defn contents-to-hashmap [file-hm]
+  (assoc file-hm
+         :hash-a (parse-string (:content-a file-hm))
+         :hash-b (parse-string (:content-b file-hm))))
+
+(defn contents-difference [file-hm]
+   (assoc file-hm :difference (hashmaps-diff (:hash-a file-hm)
+                                             (:hash-b file-hm))))
+  
 (defn versions-diff [version-a version-b]
   (->> (filepairs version-a version-b)
-       (map (fn [file-hm]
-              (assoc file-hm
-                     :hash-a (parse-string (:content-a file-hm))
-                     :hash-b (parse-string (:content-b file-hm)))))
-       (map (fn [file-hm]
-              (assoc file-hm :difference (hashmaps-diff (:hash-a file-hm)
-                                                        (:hash-b file-hm)))))
-       (map (fn [file-hm]
-              (select-keys file-hm [:filenames :difference])))
+       (map (fn [filepair]
+              (-> filepair
+                  contents-to-hashmap
+                  contents-difference
+                  (select-keys [:filenames :difference]))))
        generate-string))
 
 (defn get-version-names []
