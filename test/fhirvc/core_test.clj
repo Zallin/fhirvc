@@ -2,15 +2,6 @@
   (:require [clojure.test :refer :all]
             [fhirvc.core :refer :all]))
 
-(deftest reads-files-of-particular-version
-  (is (= (fhir-files "2016 Sep") [{:filename "/text1.txt" :content "this is text1\n"}])))
-
-(deftest finds-correspondence-between-files
-  (is (= (filepairs "2016 Sep" "2016 May")
-         (lazy-seq [{:filenames ["/text1.txt", "/text1.txt"]
-                     :content-a "this is text1\n"
-                     :content-b "this is text1\n"}]))))
-
 (deftest single-primitive-property-deleted
   (let [a {:a 3 :b 4}
         b {:b 4}]
@@ -117,7 +108,9 @@
   (let [a {:a {:b 1}}
         b {:a {:b 1 :c 2}}]
     (is (= (hashmaps-diff a b)
-           {:a {:+ {:c 2}
+           {:+ {}
+            :- {}
+            :a {:+ {:c 2}
                 :- {}
                 :b 1}}))))
 
