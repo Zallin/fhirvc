@@ -3,5 +3,10 @@ ul {
 }
 
 li {
-    margin-left: 1.25rem;
+    margin-left: 0;
+    list-style: none;
+}
+
+.file-comp{
+    margin-top : 20px;
 }

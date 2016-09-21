@@ -1,3 +1,9 @@
+var options = {
+    nodeMargin : 20,
+    addColor : '#E1FAEA',
+    delColor : '#FCE6E2'
+}
+
 function JSONtoDOM(rootEl, json){
 
     function type(obj){
@@ -8,13 +14,12 @@ function JSONtoDOM(rootEl, json){
     function inner(parent, json, color){
 	var keys = Object.keys(json)
 	keys.forEach(function (key){
-	    var keyToColor = {'+' : 'green',
-			      '-' : 'red'}
+	    var keyToColor = {'+' : options.addColor,
+			      '-' : options.delColor}
 
 	    if (key == '+' || key == '-'){
 		var childColor = keyToColor[key],
 		    toDraw = json[key];
-		console.log(childColor);
 		inner(parent, toDraw, childColor);
 	    }
 	    else {
@@ -33,7 +38,8 @@ function JSONtoDOM(rootEl, json){
 		if (color) {
 		    child.css('background-color', color)
 		}
-
+		var child_margin = +parent.css('margin-left').replace('px', '') + options.nodeMargin + 'px';
+		child.css('margin-left', child_margin)
 		parent.append(child)
 	    }
 	
@@ -48,9 +54,12 @@ $('form').submit(function (e){
     $.get("/compare", form_data, function(filediff_arr){
 	// TODO: check content type
 	var rootEl = $('.root')
+	rootEl.empty()
 	filediff_arr.forEach(function (json){
 	    var ul = $(document.createElement('ul'))
-	    ul.text("Files: " + json["filenames"].join(" "))
+	    compared = json['filenames']
+	    ul.text(compared[0] +  ' compared to ' + compared[1]);
+	    ul.addClass('file-comp')
 	    JSONtoDOM(ul, json["difference"])
 	    rootEl.append(ul);
 	});
