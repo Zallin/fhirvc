@@ -54,20 +54,20 @@
 (defmethod coll-diff :default [a b] {:removed a :added b})
 
                                                       
-(defn contents-to-hashmap [file-hm]
+(defn contents-to-repr [file-hm]
   (assoc file-hm
-         :hash-a (parse-string (:content-a file-hm))
-         :hash-b (parse-string (:content-b file-hm))))
+         :repr-a (parse-string (:content-a file-hm))
+         :repr-b (parse-string (:content-b file-hm))))
 
 (defn contents-difference [file-hm]
-   (assoc file-hm :difference (coll-diff (:hash-a file-hm)
-                                         (:hash-b file-hm))))
+   (assoc file-hm :difference (coll-diff (:repr-a file-hm)
+                                         (:repr-b file-hm))))
   
 (defn versions-diff [version-a version-b]
   (->> (filepairs version-a version-b)
        (map (fn [filepair]
               (-> filepair
-                  contents-to-hashmap
+                  contents-to-repr
                   contents-difference
                   (select-keys [:filenames :difference]))))
        generate-string))
