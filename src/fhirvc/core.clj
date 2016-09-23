@@ -1,5 +1,6 @@
 (ns fhirvc.core
   (:require [clojure.set :refer [intersection difference]]
+            [clojure.data :refer [diff]]
             [cheshire.core :refer :all]
             [config.core :refer [env]]
             [fhirvc.utils :refer :all]))
@@ -25,19 +26,13 @@
      :content-a (:content file-a)
      :content-b (:content file-b)}))    
 
-(defn property-changed [key val-a val-b hm]
-  (update (update hm :- (fn [removed]
-                          (assoc removed key val-a)))
-          :+
-          (fn [added]
-            (assoc added key val-b))))
+(defmulti coll-diff (fn [a b] [(type a) (type b)]))
 
-
-(defn hashmaps-diff [a b]
+(defmethod coll-diff [clojure.lang.PersistentArrayMap clojure.lang.PersistentArrayMap] [a b]
   (let [keys-a (set (keys a))
         keys-b (set (keys b))
-        removed {:- (select-keys a (difference keys-a keys-b))}
-        added {:+ (select-keys b (difference keys-b keys-a))}]
+        removed {:removed (select-keys a (difference keys-a keys-b))}
+        added {:added (select-keys b (difference keys-b keys-a))}]
     (loop [keys (intersection keys-a keys-b)
            acc-hm (merge removed added)]
       (if (empty? keys)
@@ -46,19 +41,27 @@
               val-a (get a cur-key)
               val-b (get b cur-key)]
           (cond (= val-a val-b) (recur (rest keys) (assoc acc-hm cur-key val-a))
-                (and (map? val-a) (map? val-b)) (recur (rest keys)
-                                                       (assoc acc-hm cur-key (hashmaps-diff val-a val-b)))                                                               
-                :else (recur (rest keys)
-                             (property-changed cur-key val-a val-b acc-hm))))))))             
+                :else (recur (rest keys) (assoc acc-hm cur-key (coll-diff val-a val-b)))))))))
 
+(defmethod coll-diff [clojure.lang.PersistentVector clojure.lang.PersistentVector] [a b]
+  (let [[things-in-a
+         things-in-b
+         things-in-both] (map (partial filter #(not (nil? %)))
+                             (map #(or % [])
+                                  (diff a b)))]
+    (conj things-in-both {:removed things-in-a :added things-in-b})))
+
+(defmethod coll-diff :default [a b] {:removed a :added b})
+
+                                                      
 (defn contents-to-hashmap [file-hm]
   (assoc file-hm
          :hash-a (parse-string (:content-a file-hm))
          :hash-b (parse-string (:content-b file-hm))))
 
 (defn contents-difference [file-hm]
-   (assoc file-hm :difference (hashmaps-diff (:hash-a file-hm)
-                                             (:hash-b file-hm))))
+   (assoc file-hm :difference (coll-diff (:hash-a file-hm)
+                                         (:hash-b file-hm))))
   
 (defn versions-diff [version-a version-b]
   (->> (filepairs version-a version-b)
@@ -71,4 +74,3 @@
 
 (defn get-version-names []
   (map :name (:fhir-versions env)))
-
