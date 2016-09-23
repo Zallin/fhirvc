@@ -1,0 +1,24 @@
+{:fhir-versions [{:name "2016 Sep"
+                  :files ["resources/fhir/stu3/conceptmaps.json",
+                          "resources/fhir/stu3/profiles-types.json",
+                          "resources/fhir/stu3/v2-tables.json",
+                          "resources/fhir/stu3/valuesets.json",
+                          "resources/fhir/stu3/profiles-resources.json",
+                          "resources/fhir/stu3/search-parameters.json",
+                          "resources/fhir/stu3/v3-codesystems.json"]}
+                 {:name "2016 May"
+                  :files ["resources/fhir/stu3_candidate/conceptmaps.json",
+                          "resources/fhir/stu3_candidate/profiles-types.json",
+                          "resources/fhir/stu3_candidate/v3-codesystems.json",
+                          "resources/fhir/stu3_candidate/profiles-resources.json",
+                          "resources/fhir/stu3_candidate/search-parameters.json",
+                          "resources/fhir/stu3_candidate/v2-tables.json",
+                          "resources/fhir/stu3_candidate/valuesets.json"]}
+                 {:name "2015 Dec"
+                  :files ["resources/fhir/gao_ballot_package/conceptmaps.json",
+                          "resources/fhir/gao_ballot_package/profiles-types.json",
+                          "resources/fhir/gao_ballot_package/v3-codesystems.json",
+                          "resources/fhir/gao_ballot_package/profiles-resources.json",
+                          "resources/fhir/gao_ballot_package/search-parameters.json",
+                          "resources/fhir/gao_ballot_package/v2-tables.json",
+                          "resources/fhir/gao_ballot_package/valuesets.json"]}]}                  
