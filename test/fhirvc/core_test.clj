@@ -109,10 +109,20 @@
     (is (= (coll-diff a b)
            {:added {}
             :removed {}
-            :a [{:added [4] :removed []} 1 2 3]}))))
+            :a [{:added [4] :removed []} 1 3 2]}))))
            
 (deftest value-in-array-property-deleted
   (let [a {:a [1 2 3]}
         b {:a [1 2]}]
     (is (= (coll-diff a b)
            {:added {} :removed {} :a [{:added [] :removed [3]} 1 2]}))))
+
+(deftest map-value-in-array-property-added
+  (let [a {:a [{:a 1 :b 2}]}
+        b {:a [{:a 1 :b 3}]}]
+    (is (= (coll-diff a b)
+           {:added {}
+            :removed {}
+            :a [{:added [{:a 1 :b 3}]
+                 :removed [{:a 1 :b 2}]}]}))))
+           

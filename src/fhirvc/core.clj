@@ -1,6 +1,5 @@
 (ns fhirvc.core
   (:require [clojure.set :refer [intersection difference]]
-            [clojure.data :refer [diff]]
             [cheshire.core :refer :all]
             [config.core :refer [env]]
             [fhirvc.utils :refer :all]))
@@ -44,16 +43,45 @@
                 :else (recur (rest keys) (assoc acc-hm cur-key (coll-diff val-a val-b)))))))))
 
 (defmethod coll-diff [clojure.lang.PersistentVector clojure.lang.PersistentVector] [a b]
-  (let [[things-in-a
-         things-in-b
-         things-in-both] (map (partial filter #(not (nil? %)))
-                             (map #(or % [])
-                                  (diff a b)))]
-    (conj things-in-both {:removed things-in-a :added things-in-b})))
-
+  (let [freq-a (frequencies a)
+        freq-b (frequencies b)
+        only-in-first (fn [a b]
+                        (mapcat
+                         (fn [k] (repeat (get a k) k))
+                         (difference (set (keys a)) (set (keys b)))))]                     
+    (loop [keys (intersection (set (keys freq-a)) (set (keys freq-b)))
+           elements-in-common []
+           elements-in-a (only-in-first freq-a freq-b)
+           elements-in-b (only-in-first freq-b freq-a)]
+      (if (empty? keys)
+        (conj elements-in-common {:removed elements-in-a :added elements-in-b})
+        (let [cur-key (first keys)
+              occ-in-a (get freq-a cur-key)
+              occ-in-b (get freq-b cur-key)]
+          (cond (= occ-in-a occ-in-b) (recur (rest keys)
+                                             (concat elements-in-common
+                                                     (repeat occ-in-a cur-key))
+                                             elements-in-a
+                                             elements-in-b)                                                                                   
+                (< occ-in-a occ-in-b) (recur (rest keys)
+                                             (concat elements-in-common
+                                                     (repeat occ-in-a cur-key))
+                                             elements-in-a
+                                             (concat elements-in-b
+                                                     (repeat  (- occ-in-b
+                                                                 occ-in-a)
+                                                            cur-key)))
+                :else (recur (rest keys)
+                             (concat elements-in-common
+                                     (repeat occ-in-b cur-key))
+                             (concat elements-in-a
+                                     (repeat (- occ-in-a
+                                                occ-in-b)
+                                           cur-key))
+                             elements-in-b)))))))                                                                   
+  
 (defmethod coll-diff :default [a b] {:removed a :added b})
-
-                                                      
+                                                     
 (defn contents-to-repr [file-hm]
   (assoc file-hm
          :repr-a (parse-string (:content-a file-hm))
