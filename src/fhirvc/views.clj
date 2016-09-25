@@ -9,7 +9,7 @@
    [:html
     [:head
      [:title title]
-     (page/include-css "/css/foundation.min.css" "/css/styles.css")]
+     (page/include-css "/css/foundation.min.css" "/css/styles.css" "/css/jquery.json-viewer.css")]
     [:body cnt]]))
                              
 
@@ -32,4 +32,7 @@
           [:div {:class "row"}
            [:h2 "results"]
            [:ul.root]]
-  (page/include-js "js/jquery.js" "js/script.js")))
+  (page/include-js "js/jquery.js" "js/jquery.json-viewer.js" "js/script.js")))
+
+
+
