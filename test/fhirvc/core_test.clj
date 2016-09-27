@@ -126,3 +126,27 @@
             :a [{:added [{:a 1 :b 3}]
                  :removed [{:a 1 :b 2}]}]}))))
            
+(deftest map-value-in-array-property-changed
+  (let [a {:a [{:a 1 :b 2}]}
+        b {:a [{:a 1 :b 3}]}]
+    (is (= (coll-diff a b)
+           {:added {}
+            :removed {}
+            :a [{:added [{:a 1 :b 3}]
+                 :removed [{:a 1 :b 2}]}]}))))
+
+(deftest nothing-changed-in-map
+  (let [a {:a 2}]
+    (is (= (coll-diff a a)
+           {:added {}
+            :removed {}
+            :a 2}))))
+
+(deftest nothing-changed-in-array-property
+  (let [a {:a [{:a 1}]}]
+    (is (= (coll-diff a a)
+           {:added {}
+            :removed {}
+            :a [{:a 1}]}))))
+        
+        
