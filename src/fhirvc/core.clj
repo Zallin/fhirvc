@@ -1,104 +1,71 @@
 (ns fhirvc.core
-  (:require [clojure.set :refer [intersection difference]]
-            [cheshire.core :refer :all]
+  (:require [clojure.tools.cli :refer [parse-opts]]
             [config.core :refer [env]]
-            [fhirvc.utils :refer :all]))
+            [cheshire.core :refer :all]
+            [clojure.java.io :refer [make-parents file]]
+            [fhirvc.comparator :refer [coll-diff]]))
 
-(defn fhir-files [version]
-  (->> (:fhir-versions env)
-       (filter #(= version (:name %)))
-       first
-       :files
-       (map (fn [filepath]
-              (let [fname (filename filepath)]
-                {:filename fname
-                 :content (slurp filepath)})))))
+(def cli-options
+  [["-o", "--output FOLDER", "Output folder"
+    :default "data"]])
 
-(defn corresponds? [file-a file-b]
-  (= (:filename file-a) (:filename file-b)))
+(defn pairs [versions]
+  (for [a versions
+        b versions
+        :while (not= a b)]
+    [a b]))
 
-(defn filepairs [version-a version-b]
-  (for [file-a (fhir-files version-a)
-        file-b (fhir-files version-b)
-        :when (corresponds? file-a file-b)]
-    {:filenames [(:filename file-a) (:filename file-b)]
-     :content-a (:content file-a)
-     :content-b (:content file-b)}))    
+;; TODO
+;; filter directories
+;; read files with provided extensions
+(defn readdir [dir]
+  (map slurp (rest (file-seq (file dir)))))
 
-(defmulti coll-diff (fn [a b] [(type a) (type b)]))
+(defn files [[a b]]
+  (let [data-a (readdir (str (:fhir-folder env) "/" a))
+        data-b (readdir (str (:fhir-folder env) "/" b))]
+    [{:name a
+      :data data-a}
+     {:name b
+      :data data-b}]))
 
-(defmethod coll-diff [clojure.lang.PersistentArrayMap clojure.lang.PersistentArrayMap] [a b]
-  (let [keys-a (set (keys a))
-        keys-b (set (keys b))
-        removed {:removed (select-keys a (difference keys-a keys-b))}
-        added {:added (select-keys b (difference keys-b keys-a))}]
-    (loop [keys (intersection keys-a keys-b)
-           acc-hm (merge removed added)]
-      (if (empty? keys)
-        acc-hm
-        (let [cur-key (first keys)
-              val-a (get a cur-key)
-              val-b (get b cur-key)]
-          (cond (= val-a val-b) (recur (rest keys) (assoc acc-hm cur-key val-a))
-                :else (recur (rest keys) (assoc acc-hm cur-key (coll-diff val-a val-b)))))))))
+;; move to utils?
+(defn update-seq [attr f seq]
+  (map #(update % attr f) seq))
 
-(defmethod coll-diff [clojure.lang.PersistentVector clojure.lang.PersistentVector] [a b]
-  (let [freq-a (frequencies a)
-        freq-b (frequencies b)
-        only-in-first (fn [a b]
-                        (mapcat
-                         (fn [k] (repeat (get a k) k))
-                         (difference (set (keys a)) (set (keys b)))))]                     
-    (loop [keys (intersection (set (keys freq-a)) (set (keys freq-b)))
-           elements-in-common []
-           elements-in-a (only-in-first freq-a freq-b)
-           elements-in-b (only-in-first freq-b freq-a)]
-      (if (empty? keys)
-        (conj elements-in-common {:removed elements-in-a :added elements-in-b})
-        (let [cur-key (first keys)
-              occ-in-a (get freq-a cur-key)
-              occ-in-b (get freq-b cur-key)]
-          (cond (= occ-in-a occ-in-b) (recur (rest keys)
-                                             (concat elements-in-common
-                                                     (repeat occ-in-a cur-key))
-                                             elements-in-a
-                                             elements-in-b)                                                                                   
-                (< occ-in-a occ-in-b) (recur (rest keys)
-                                             (concat elements-in-common
-                                                     (repeat occ-in-a cur-key))
-                                             elements-in-a
-                                             (concat elements-in-b
-                                                     (repeat  (- occ-in-b
-                                                                 occ-in-a)
-                                                            cur-key)))
-                :else (recur (rest keys)
-                             (concat elements-in-common
-                                     (repeat occ-in-b cur-key))
-                             (concat elements-in-a
-                                     (repeat (- occ-in-a
-                                                occ-in-b)
-                                           cur-key))
-                             elements-in-b)))))))                                                                   
-  
-(defmethod coll-diff :default [a b] {:removed a :added b})
-                                                     
-(defn contents-to-repr [file-hm]
-  (assoc file-hm
-         :repr-a (parse-string (:content-a file-hm))
-         :repr-b (parse-string (:content-b file-hm))))
+(defn parse-files [pair]
+  (update-seq :data #(map parse-string %) pair))
 
-(defn contents-difference [file-hm]
-   (assoc file-hm :difference (coll-diff (:repr-a file-hm)
-                                         (:repr-b file-hm))))
-  
-(defn versions-diff [version-a version-b]
-  (->> (filepairs version-a version-b)
-       (map (fn [filepair]
-              (-> filepair
-                  contents-to-repr
-                  contents-difference
-                  (select-keys [:filenames :difference]))))
-       generate-string))
+(defn extract-defs [pair]
+  (update-seq :data #(into [] (map (fn [el] (get el "resource")) %))
+              (update-seq :data #(mapcat (fn [cnt] (get cnt "entry")) %) pair)))
+                      
+(defn write-to [dest diff-map]
+  (let [filename (str dest "/" (:version-a diff-map) "_" (:version-b diff-map) ".json")]
+    (make-parents filename)
+    (spit filename (generate-string diff-map))))
 
-(defn get-version-names []
-  (map :name (:fhir-versions env)))
+(defn defs-difference [[a b]]
+  (let [diff (coll-diff (:data a)
+                         (:data b))]
+    {:version-a (:name a)
+     :version-b (:name b)
+     :difference diff}))
+
+(defn print-pass [arg]
+  (println arg)
+  arg)
+
+(defn -main [& args]
+  (let [{options :options} (parse-opts args cli-options)]
+    (map (fn [pair]
+           (->> (files pair)
+                parse-files
+                extract-defs
+                defs-difference
+                (write-to (:output options))))
+         (pairs (:versions env)))))
+
+(-main "-o new_folder")
+
+

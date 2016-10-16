@@ -1,9 +1,2 @@
-{:fhir-versions [{:name "2016 Sep"
-                  :files ["test/test_files/sep/file1.json",
-                          "test/test_files/sep/file2.json"]}
-                 {:name "2016 May"
-                  :files ["test/test_files/may/file1.json"
-                          "test/test_files/may/file2.json"]}
-                 {:name "2015 Dec"
-                  :files []}]}
-                  
+{:versions ["gao_ballot_package", "stu3_candidate"]
+ :fhir-folder "testing"}

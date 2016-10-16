@@ -4,6 +4,7 @@
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/tools.cli "0.3.5"]
                  [compojure "1.5.1"]
                  [http-kit "2.1.18"]
                  [hiccup "1.0.5"]
@@ -13,5 +14,6 @@
                  [cheshire "5.6.3"]]
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler fhirvc.handler/app}
+  :main fhirvc.core
   :profiles
   {:dev {:dependencies [[im.chit/vinyasa "0.4.7"]] :resource-paths ["config/dev"]}})
