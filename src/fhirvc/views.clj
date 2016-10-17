@@ -1,38 +1,66 @@
 (ns fhirvc.views
-  (:require [fhirvc.core :as fc]
-            [hiccup.core :as hc]
+  (:require [hiccup.core :as hc]
             [hiccup.page :as page]
-            [config.core :refer [env]]))
+            [clojure.string :refer [replace lower-case]]
+            [fhirvc.adt :refer :all]
+            [json-html.core :refer :all]))
 
 (defn layout [title & cnt]
   (hc/html
    [:html
     [:head
      [:title title]
-     (page/include-css "/css/foundation.min.css" "/css/styles.css" "/css/jquery.json-viewer.css")]
-    [:body cnt]]))
-                             
+     (page/include-css "css/foundation.min.css" "css/styles.css")]
+    [:body
+     [:div.top-bar
+      [:div.top-bar-left
+       [:ul.dropdown.menu
+        [:li.menu-text "FHIR version comparator"]]]]
+     [:div cnt]]]))
 
-(defn index []
-  (layout "FHIR version comparator"
-          [:div {:class "row"}
-           [:h2 "Choose versions to compare"]]
-          [:div {:class "row"}
-           [:div {:class "large-10 medium-10"}
+(defn index [comp-seq]
+  (layout "FHIRvc | Choose versions to compare"
+          [:div.row
+           [:h3 "Choose versions to compare"]]          
+          [:div.row 
+           [:div.large-10.medium-10 
             [:form
-             [:div {:class "row"}
-              (for [param-name ["first_doc_name", "sec_doc_name"]]
-                [:div {:class "large-5 medium-5 columns"}
-                 [:select {:name param-name}
-                  (for [name (fc/get-version-names)]
-                    [:option {:value name} name])]])]
-             [:div {:class "row"}
-              [:div {:class "large-offset-5 medium-offset-5 large-2 medium-2 columns"}
-               [:input {:type "submit" :value "Compare" :class "expanded button"}]]]]]]
-          [:div {:class "row"}
-           [:h2 "results"]
-           [:ul.root]]
-  (page/include-js "js/jquery.js" "js/jquery.json-viewer.js" "js/script.js")))
+             [:div.row
+                [:div.large-5.medium-5.columns 
+                 [:select {:name "versions"}
+                  (for [comp comp-seq]
+                    (let [[a b] (fhir-names comp)]
+                      [:option {:value (comp-ref comp)} (str a " to " b)]))]]]                     
+             [:div.row
+              [:div.large-2.medium-2.columns 
+               [:input.expanded.button {:type "submit" :value "Compare"}]]]]]]
+  (page/include-js "js/jquery.js" "js/script.js")))
 
+(defn section [header defs comp]
+  (if (empty? defs)
+    [:div.row
+     [:h4 (str "No " (lower-case header))]]
+    [:div.row
+     [:h4 header]
+     [:ul
+      (for [def defs]
+        [:li [:a {:href (def-ref def comp)} (def-name def)]])]]))
 
+(defn version-comparison [comparison]
+  (let [diff (fhir-diff comparison)]
+    (layout "FHIRvc | Comparison summary"
+            [:div.row
+             (let [[a b] (fhir-names comparison)]
+               [:h3 (str a " compared to " b)])]
+            (section "Added definitions" (added diff) comparison)
+            (section "Removed definitions" (removed diff) comparison)
+            (section "Changed defitinions" (changed diff) comparison)
+            (section "Unchanged definitions" (unchanged diff) comparison))))
 
+(defn definition [def]
+  (layout "FHIRvc | Definition"
+          [:div.row
+           [:h3 (str "Resource type: " (def-type def))]
+           [:h3 (str "Resource name: " (def-name def))]]
+          [:div.row
+           (edn->html def)]))                                                      

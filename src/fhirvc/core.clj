@@ -3,11 +3,14 @@
             [config.core :refer [env]]
             [cheshire.core :refer :all]
             [clojure.java.io :refer [make-parents file]]
-            [fhirvc.comparator :refer [coll-diff]]))
+            [fhirvc.comparator :refer [coll-diff]]
+            [fhirvc.generator :refer [generate-site]]
+            [clojure.string :refer [trim]]))
 
 (def cli-options
-  [["-o", "--output FOLDER", "Output folder"
-    :default "data"]])
+  [["-o", "--output DIR", "Output folder"
+    :parse-fn #(trim %)
+    :default "site"]])
 
 (defn pairs [versions]
   (for [a versions
@@ -48,24 +51,19 @@
 (defn defs-difference [[a b]]
   (let [diff (coll-diff (:data a)
                          (:data b))]
-    {:version-a (:name a)
-     :version-b (:name b)
-     :difference diff}))
-
-(defn print-pass [arg]
-  (println arg)
-  arg)
+    {"version-a" (:name a)
+     "version-b" (:name b)
+     "difference" diff}))
 
 (defn -main [& args]
   (let [{options :options} (parse-opts args cli-options)]
-    (map (fn [pair]
-           (->> (files pair)
-                parse-files
-                extract-defs
-                defs-difference
-                (write-to (:output options))))
-         (pairs (:versions env)))))
+    (println options)
+    (generate-site (:output options)
+                   (map (fn [pair]
+                          (->> (files pair)
+                               parse-files
+                               extract-defs
+                               defs-difference))
+                        (pairs (:versions env))))))
 
-(-main "-o new_folder")
-
-
+(-main "-o site")

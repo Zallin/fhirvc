@@ -11,7 +11,8 @@
                  [ring/ring-defaults "0.2.1"]
                  [spyscope "0.1.4" :exclusions [clj-time joda-time]]
                  [yogthos/config "0.8"]
-                 [cheshire "5.6.3"]]
+                 [cheshire "5.6.3"]
+                 [json-html "0.4.0"]]                  
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler fhirvc.handler/app}
   :main fhirvc.core
