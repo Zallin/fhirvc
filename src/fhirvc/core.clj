@@ -65,5 +65,3 @@
                                extract-defs
                                defs-difference))
                         (pairs (:versions env))))))
-
-(-main "-o site")
