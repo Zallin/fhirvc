@@ -1,2 +1,0 @@
-{:versions ["gao_ballot_package", "stu3_candidate" "stu3_ballot"]
- :fhir-folder "resources/fhir"}

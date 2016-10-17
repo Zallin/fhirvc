@@ -1,4 +1,0 @@
-{"first" : 1,
- "second" : {"prop" : 3,
-	     "another_prop" : [1, 2, 3]},
- "and_another" : {"prop" : 2}}
