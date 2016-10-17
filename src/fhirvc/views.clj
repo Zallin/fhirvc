@@ -12,7 +12,7 @@
    [:html
     [:head
      [:title title]
-     (page/include-css "zallin.github.io/fhirvc/css/foundation.min.css" "zallin.github.io/fhirvc/css/styles.css")]
+     (page/include-css "/fhirvc/css/foundation.min.css" "/fhirvc/css/styles.css")]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -36,7 +36,7 @@
              [:div.row
               [:div.large-2.medium-2.columns 
                [:input.expanded.button {:type "submit" :value "Compare"}]]]]]]
-  (page/include-js "zallin.github.io/fhirvc/js/jquery.js" "zallin.github.io/fhirvc/js/script.js")))
+  (page/include-js "/fhirvc/js/jquery.js" "/fhirvc/js/script.js")))
 
 (defn section [header defs comp]
   (if (empty? defs)
