@@ -5,12 +5,14 @@
             [fhirvc.adt :refer :all]
             [json-html.core :refer :all]))
 
+(def prefix "zallin.github.io/fhirvc")
+
 (defn layout [title & cnt]
   (hc/html
    [:html
     [:head
      [:title title]
-     (page/include-css "/css/foundation.min.css" "/css/styles.css")]
+     (page/include-css "zallin.github.io/fhirvc/css/foundation.min.css" "zallin.github.io/fhirvc/css/styles.css")]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -34,7 +36,7 @@
              [:div.row
               [:div.large-2.medium-2.columns 
                [:input.expanded.button {:type "submit" :value "Compare"}]]]]]]
-  (page/include-js "/js/jquery.js" "/js/script.js")))
+  (page/include-js "zallin.github.io/fhirvc/js/jquery.js" "zallin.github.io/fhirvc/js/script.js")))
 
 (defn section [header defs comp]
   (if (empty? defs)
