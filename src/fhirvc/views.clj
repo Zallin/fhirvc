@@ -10,7 +10,7 @@
    [:html
     [:head
      [:title title]
-     (page/include-css "css/foundation.min.css" "css/styles.css")]
+     (page/include-css "/css/foundation.min.css" "/css/styles.css")]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -34,7 +34,7 @@
              [:div.row
               [:div.large-2.medium-2.columns 
                [:input.expanded.button {:type "submit" :value "Compare"}]]]]]]
-  (page/include-js "js/jquery.js" "js/script.js")))
+  (page/include-js "/js/jquery.js" "/js/script.js")))
 
 (defn section [header defs comp]
   (if (empty? defs)
