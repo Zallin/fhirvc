@@ -23,20 +23,15 @@
 (defn index [comp-seq]
   (layout "FHIRvc | Choose versions to compare"
           [:div.row
-           [:h3 "Choose versions to compare"]]          
+           [:h3 "Following versions currenly supported"]]          
           [:div.row 
            [:div.large-10.medium-10 
             [:form
              [:div.row
-                [:div.large-5.medium-5.columns 
-                 [:select {:name "versions"}
-                  (for [comp comp-seq]
-                    (let [[a b] (fhir-names comp)]
-                      [:option {:value (comp-ref comp)} (str a " to " b)]))]]]                     
-             [:div.row
-              [:div.large-2.medium-2.columns 
-               [:input.expanded.button {:type "submit" :value "Compare"}]]]]]]
-  (page/include-js "/fhirvc/js/jquery.js" "/fhirvc/js/script.js")))
+              [:ul
+               (for [comp comp-seq]
+                 (let [[a b] (fhir-names comp)]
+                   [:li [:a {:href (comp-ref comp)} (str a " to " b)]]))]]]]]))
 
 (defn section [header defs comp]
   (if (empty? defs)
