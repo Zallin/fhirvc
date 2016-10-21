@@ -16,7 +16,7 @@
   (for [a versions
         b versions
         :while (not= a b)]
-    [b a]))
+    [a b]))
 
 ;; TODO
 ;; filter directories
@@ -49,8 +49,8 @@
     (spit filename (generate-string diff-map))))
 
 (defn defs-difference [[a b]]
-  (let [diff (coll-diff (:data a)
-                         (:data b))]
+  (let [diff (coll-diff (:data b)
+                         (:data a))]
     {"version-a" (:name a)
      "version-b" (:name b)
      "difference" diff}))
