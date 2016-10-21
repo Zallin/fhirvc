@@ -5,8 +5,6 @@
             [fhirvc.adt :refer :all]
             [json-html.core :refer :all]))
 
-(def prefix "zallin.github.io/fhirvc")
-
 (defn layout [title & cnt]
   (hc/html
    [:html
