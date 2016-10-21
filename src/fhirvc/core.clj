@@ -57,7 +57,6 @@
 
 (defn -main [& args]
   (let [{options :options} (parse-opts args cli-options)]
-    (println options)
     (generate-site (:output options)
                    (map (fn [pair]
                           (->> (files pair)
