@@ -16,7 +16,7 @@
   (for [a versions
         b versions
         :while (not= a b)]
-    [a b]))
+    [b a]))
 
 ;; TODO
 ;; filter directories
