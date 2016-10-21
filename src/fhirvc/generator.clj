@@ -26,7 +26,7 @@
                  (removed diff)
                  (changed diff)
                  (unchanged diff)))))
-
+        
 ;; add public folder copy                    
 (defn generate-site [output-folder comp-seq]
   (mkdir output-folder)
