@@ -60,4 +60,5 @@
            [:h3 (str "Resource type: " (def-type def))]
            [:h3 (str "Resource name: " (def-name def))]]
           [:div.row
-           (edn->html def)]))                                                      
+           (edn->html def)]
+          (page/include-css "/fhirvc/css/json.human.css")))                                                      
