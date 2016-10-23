@@ -10,7 +10,7 @@
 (def cli-options
   [["-o", "--output DIR", "Output folder"
     :parse-fn #(trim %)
-    :default "site"]])
+    :default "resources/site"]])
 
 (defn pairs [versions]
   (for [a versions
@@ -50,7 +50,7 @@
 
 (defn defs-difference [[a b]]
   (let [diff (coll-diff (:data b)
-                         (:data a))]
+                        (:data a))]
     {"version-a" (:name a)
      "version-b" (:name b)
      "difference" diff}))
