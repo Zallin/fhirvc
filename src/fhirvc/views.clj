@@ -3,14 +3,18 @@
             [hiccup.page :as page]
             [clojure.string :refer [replace lower-case]]
             [fhirvc.adt :refer :all]
-            [json-html.core :refer :all]))
+            [json-html.core :refer :all]
+            [config.core :refer [env]]))
+
+(defn append-pref [ref]
+  (str (:path-prefix env) ref))
 
 (defn layout [title & cnt]
   (hc/html
    [:html
     [:head
      [:title title]
-     (page/include-css "/fhirvc/css/foundation.min.css" "/fhirvc/css/styles.css")]
+     (page/include-css (append-pref "css/foundation.min.css") (append-pref "css/styles.css"))]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -58,5 +62,4 @@
            [:h3 (str "Resource type: " (def-type def))]
            [:h3 (str "Resource name: " (def-name def))]]
           [:div.row
-           (edn->html def)]
-          (page/include-css "/fhirvc/css/json.human.css")))                                                      
+           (edn->html def)]))
