@@ -22,20 +22,20 @@
          "name" "third"
          "prop-a" "val-b"}])
 
-(def res-1 {:added [{"resource" {"resourceType" "StructureDefinition"}
-                  "name" "fourth"
-                  "prop-a" "val-a"}]
-          :removed [{"resource" {"resourceType" "StructureDefinition"}
-                    "name" "first"
-                    "prop-a" "val-a"}]
-          :unchanged [{"resource" {"resourceType" "StructureDefinition"}
-                      "name" "second"
+(def res-1 {"added" [{"resource" {"resourceType" "StructureDefinition"}
+                      "name" "fourth"
                       "prop-a" "val-a"}]
-          :changed [{:added {}
-                     :removed {}
-                     :unchanged {"resource" {"resourceType" "StructureDefinition"}
+            "removed" [{"resource" {"resourceType" "StructureDefinition"}
+                        "name" "first"
+                        "prop-a" "val-a"}]
+            "unchanged" [{"resource" {"resourceType" "StructureDefinition"}
+                          "name" "second"
+                          "prop-a" "val-a"}]
+            "changed" [{"added" {}
+                        "removed" {}
+                        "unchanged" {"resource" {"resourceType" "StructureDefinition"}
                                  "name" "third"}
-                     :changed {"prop-a" {:prev "val-a" :cur "val-b"}}}]})
+                        "changed" {"prop-a" {"prev" "val-a" "cur" "val-b"}}}]})
 
 (deftest identifies-types-of-changes-in-vector
   (is (= (coll-diff a b)
