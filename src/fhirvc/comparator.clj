@@ -1,7 +1,8 @@
 (ns fhirvc.comparator
   (:require [clojure.set :refer [intersection difference]]
             [cheshire.core :refer :all]
-            [config.core :refer [env]]))
+            [config.core :refer [env]]
+            [fhirvc.diff :as diff]))
 
 (defn get-type [o]
   (if (contains? o "resourceType")
@@ -26,10 +27,10 @@
 
 (defmethod coll-diff [clojure.lang.IPersistentVector clojure.lang.IPersistentVector] [a b]
   (let [common (pairs-when corresponds? a b)]
-    {"added" (into [] (difference (set b) (set (map second common))))
-     "removed" (into [] (difference (set a) (set (map first common))))
-     "unchanged" (map first (filter #(= (first %) (second %)) common))
-     "changed" (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common))}))
+    (diff/create (into [] (difference (set b) (set (map second common))))
+                 (into [] (difference (set a) (set (map first common))))
+                 (map first (filter #(= (first %) (second %)) common))
+                 (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common)))))
 
 (defn props-filtered-on [f prop-set a b]
   (->> prop-set
@@ -49,10 +50,10 @@
   (let [keys-a (set (keys a))
         keys-b (set (keys b))
         common (intersection keys-a keys-b)]
-    {"added" (select-keys b (difference keys-b keys-a))
-     "removed" (select-keys a (difference keys-a keys-b))
-     "unchanged" (select-keys a (props-filtered-on = common a b))
-     "changed" (changed-keys (props-filtered-on not= common a b) a b)}))
+    (diff/create (select-keys b (difference keys-b keys-a))
+                 (select-keys a (difference keys-a keys-b))
+                 (select-keys a (props-filtered-on = common a b))
+                 (changed-keys (props-filtered-on not= common a b) a b))))
 
 (defmethod coll-diff :default [a b]
   {"prev" a "cur" b})

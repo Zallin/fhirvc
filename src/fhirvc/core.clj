@@ -2,9 +2,10 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [config.core :refer [env]]
             [cheshire.core :refer :all]
-            [clojure.java.io :refer [make-parents file]]
+            [clojure.java.io :refer [file]]
             [fhirvc.comparator :refer [coll-diff]]
             [fhirvc.generator :refer [generate-site]]
+            [fhirvc.comp :as comp]
             [clojure.string :refer [trim]]))
 
 (def cli-options
@@ -32,35 +33,26 @@
      {:name b
       :data data-b}]))
 
-;; move to utils?
 (defn update-seq [attr f seq]
   (map #(update % attr f) seq))
 
-(defn parse-files [pair]
+(defn to-edn [pair]
   (update-seq :data #(map parse-string %) pair))
 
-(defn extract-defs [pair]
+(defn defs [pair]
   (update-seq :data #(into [] (map (fn [el] (get el "resource")) %))
               (update-seq :data #(mapcat (fn [cnt] (get cnt "entry")) %) pair)))
                       
-(defn write-to [dest diff-map]
-  (let [filename (str dest "/" (:version-a diff-map) "_" (:version-b diff-map) ".json")]
-    (make-parents filename)
-    (spit filename (generate-string diff-map))))
-
-(defn defs-difference [[a b]]
-  (let [diff (coll-diff (:data b)
-                        (:data a))]
-    {"version-a" (:name a)
-     "version-b" (:name b)
-     "difference" diff}))
+(defn comparison [[a b]]
+  (let [diff (coll-diff (:data b) (:data a))]
+    (comp/create (:name a) (:name b) diff)))  
 
 (defn -main [& args]
   (let [{options :options} (parse-opts args cli-options)]
     (generate-site (:output options)
                    (map (fn [pair]
                           (->> (files pair)
-                               parse-files
-                               extract-defs
-                               defs-difference))
+                               to-edn
+                               defs
+                               comparison))
                         (pairs (:versions env))))))
