@@ -60,5 +60,4 @@
             [:div.row
              [:h3 (str "Resource type: " type)]
              [:h3 (str "Resource name: " name)]]
-            [:div.row
-             (edn->html cnt)])))
+            [:div.row cnt])))

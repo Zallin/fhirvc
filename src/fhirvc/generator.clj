@@ -31,12 +31,43 @@
                  views/version-comparison
                  (comparison-view-data comparison)))
 
+(defn tree-for [seqable initial label-node label-leaf next-level-f]
+  (reduce (fn [cur-tree [prop val]]
+            (conj cur-tree (if (seq? val)
+                             [:li
+                              (label-node prop)
+                              (tree-for val initial label-node label-leaf)]
+                             [:li (label-leaf prop val)])))
+          initial
+          (seq seqable)))
+
+(defn hm-tree [hm]
+  (tree-for hm [:ul] #([:p %]) #([:p (str %1 " : " %2)])))
+
+(defn ext-with-hashmap [hm style-class tree]
+  (tree-for hm
+            tree
+            #(vector (keyword (str "p." style-class)) %)
+            #(vector (keyword (str "p." style-class)) (str %1 " : " %2))))
+  
+(defn ext-with-diff [difference])
+
+(defn diff-tree [difference]
+  (->> [:ul]
+       (ext-with-hashmap (diff/added difference) "added")
+       (ext-with-hashmap (diff/removed difference) "removed")
+       (ext-with-hashmap (diff/unchanged difference) "unchanged")
+       (ext-with-diff (diff/changed difference))))                                                
+
+(defn edn-tree [difference]
+  [:ul.tree (rest (diff-tree difference))])
+
 (defn definition-view-data [difference]
   (vector (diff/type difference)
           (diff/name difference)
-          difference))
+          (edn-tree difference)))
 
-(defn generate-definition-page [output-folder comparison difference]
+(defn generate-definition-page [output-folder comparison difference]                                
   (generate-page (str output-folder "/" (comp/diff-ref comparison difference))
                  views/definition
                  (definition-view-data difference)))
@@ -59,3 +90,5 @@
                 (generate-comparison-page output-folder comp)
                 (generate-definition-pages output-folder comp))
               comp-seq)))
+
+
