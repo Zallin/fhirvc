@@ -34,3 +34,5 @@
           (changed diff)
           (unchanged diff)))
 
+(defn is-diff? [obj]
+  (contains? obj "added"))

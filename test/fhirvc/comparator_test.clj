@@ -48,12 +48,14 @@
   {"c" {"a" 1
         "b" 2
         "d" {"f" 1
+             "p" 1
              "b" 2}}})
 
 (def initial-nested-b
   {"c" {"a" 1
         "b" 2
         "d" {"f" 3
+             "p" 4
              "b" 2}}})  
 
 (def res-with-nesting
@@ -68,7 +70,9 @@
                                    "removed" {}
                                    "unchanged" {"b" 2}
                                    "changed" {"f" {"prev" 1
-                                                   "cur" 3}}}}}}})
+                                                   "cur" 3}
+                                              "p" {"prev" 1
+                                                   "cur" 4}}}}}}})
 
 (deftest diff-between-nested-maps
   (is (= (coll-diff initial-nested-a initial-nested-b)

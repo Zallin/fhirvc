@@ -1,6 +1,6 @@
 (ns fhirvc.generator-test
   (:require [clojure.test :refer :all]
-            [fhirvc.generator :refer [edn-tree ext-with-hashmap]]))
+            [fhirvc.generator :refer [edn-tree tree-with-class]]))
 
 (def without-nesting {"added" {"a" "hello"
                                "b" "yes"}
@@ -12,13 +12,13 @@
 
 (def edn-without-nesting
   [:ul.tree
-   [:li [:p.added "a : hello"]]
-   [:li [:p.removed "b : yes"]]
-   [:li [:p "c : no"]]
-   [:li [:p.changed "d"]
-    [:ul [:li [:p "previous : val-1"]] [:li [:p "current : val-2"]]]]
    [:li [:p "e : well"]]
-   [:li [:p "f : ball"]]])                         
+   [:li [:p "f : ball"]]
+   [:li [:p.added "a : hello"]]
+   [:li [:p.added "b : yes"]]
+   [:li [:p.removed "c : no"]]
+   [:li [:p.changed "d"]
+    [:ul [:li "previous : val-1"] [:li "current : val-2"]]]])                        
 
 (deftest renders-edn-without-nesting
   (is (= (edn-tree without-nesting)
@@ -63,7 +63,7 @@
 
 (def edn-with-nesting-in-added
   [:ul.tree
-   [:li [:p "a"]
+   [:li [:p.added "a"]
     [:ul
      [:li [:p "b : 2"]]
      [:li [:p "c"]
@@ -75,9 +75,8 @@
          edn-with-nesting-in-added)))
   
 (deftest extends-tree-when-hashmap-is-not-nested
-  (is (= (ext-with-hashmap {"a" 3 "b" 4} "my-style" [:ul])
-         [:ul
-          [:li [:p.my-style "a : 3"]]
+  (is (= (tree-with-class {"a" 3 "b" 4} "my-style")
+         [[:li [:p.my-style "a : 3"]]
           [:li [:p.my-style "b : 4"]]])))
           
                

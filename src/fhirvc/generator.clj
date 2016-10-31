@@ -31,36 +31,54 @@
                  views/version-comparison
                  (comparison-view-data comparison)))
 
-(defn tree-for [seqable initial label-node label-leaf next-level-f]
-  (reduce (fn [cur-tree [prop val]]
-            (conj cur-tree (if (seq? val)
-                             [:li
-                              (label-node prop)
-                              (tree-for val initial label-node label-leaf)]
-                             [:li (label-leaf prop val)])))
-          initial
-          (seq seqable)))
+(defn to-keyval-seq [seqable]
+  (if (map? seqable)
+    (seq seqable)
+    (to-keyval-seq (into {}
+                        (map #(vector %1 %2)
+                             seqable
+                             (range))))))
 
-(defn hm-tree [hm]
-  (tree-for hm [:ul] #([:p %]) #([:p (str %1 " : " %2)])))
+(defn seq-to-edn [fun seqable]
+  (map (fn [[key val]]
+         (fun key val))
+       (to-keyval-seq seqable)))
 
-(defn ext-with-hashmap [hm style-class tree]
-  (tree-for hm
-            tree
-            #(vector (keyword (str "p." style-class)) %)
-            #(vector (keyword (str "p." style-class)) (str %1 " : " %2))))
-  
-(defn ext-with-diff [difference])
+(defn tree [struct]
+  (seq-to-edn (fn [key val]
+                (if (coll? val)
+                  [:li [:p key]
+                   (concat [:ul] (tree val))]
+                  [:li [:p (str key " : " val)]]))
+              struct))
+
+(defn tree-with-class [difference class]
+  (seq-to-edn (fn [key val]
+                (if (coll? val)
+                  [:li [(keyword (str "p." class)) key]
+                   (concat [:ul] (tree val))]
+                  [:li [(keyword (str "p." class)) (str key " : " val)]]))
+              difference))
 
 (defn diff-tree [difference]
-  (->> [:ul]
-       (ext-with-hashmap (diff/added difference) "added")
-       (ext-with-hashmap (diff/removed difference) "removed")
-       (ext-with-hashmap (diff/unchanged difference) "unchanged")
-       (ext-with-diff (diff/changed difference))))                                                
+  (concat [:ul]
+          (tree (diff/unchanged difference))
+          (mapcat #(apply tree-with-class %)
+                  [[(diff/added difference) "added"]
+                   [(diff/removed difference) "removed"]])                                                                    
+          (seq-to-edn (fn [key val]
+                        (if (diff/is-diff? val)
+                          [:li [:p key]
+                           (diff-tree val)]
+                          [:li [:p.changed key]
+                           [:ul
+                            [:li (str "previous : " (get val "prev"))]
+                            [:li (str "current : " (get val "cur"))]]]))
+                      (diff/changed difference))))
 
 (defn edn-tree [difference]
-  [:ul.tree (rest (diff-tree difference))])
+  (concat [:ul.tree]
+          (rest (diff-tree difference))))
 
 (defn definition-view-data [difference]
   (vector (diff/type difference)
