@@ -86,5 +86,15 @@
               "name" "first"
               "prop-d" "val-c"})
   (is (corresponds? obj-1 obj-2)))
-       
-      
+
+
+(deftest finds-correspondence-between-strings
+  (is (corresponds? "abc" "abc")))
+
+(deftest returns-false-when-map-does-not-have-name-attr
+  (is (= (corresponds? {"prop" "val"} {"prop2" "val2"})
+         false)))
+
+(deftest finds-correspondence-on-path-attr
+  (is (corresponds? {"path" 1} {"path" 1})
+      true))
