@@ -34,21 +34,22 @@
 (defn to-keyval-seq [seqable]
   (if (map? seqable)
     (seq seqable)
-    (to-keyval-seq (into {}
-                        (map #(vector %1 %2)
-                             seqable
-                             (range))))))
+    (map #(vector %1 %2) (range) seqable)))
 
 (defn seq-to-edn [fun seqable]
   (map (fn [[key val]]
          (fun key val))
        (to-keyval-seq seqable)))
 
+(defn concat-into [val & xs]
+  (into val
+        (apply concat xs)))
+
 (defn tree [struct]
   (seq-to-edn (fn [key val]
                 (if (coll? val)
                   [:li [:p key]
-                   (concat [:ul] (tree val))]
+                   (concat-into [] [:ul] (tree val))]
                   [:li [:p (str key " : " val)]]))
               struct))
 
@@ -56,29 +57,31 @@
   (seq-to-edn (fn [key val]
                 (if (coll? val)
                   [:li [(keyword (str "p." class)) key]
-                   (concat [:ul] (tree val))]
+                   (concat-into [] [:ul] (tree val))]
                   [:li [(keyword (str "p." class)) (str key " : " val)]]))
               difference))
 
 (defn diff-tree [difference]
-  (concat [:ul]
-          (tree (diff/unchanged difference))
-          (mapcat #(apply tree-with-class %)
-                  [[(diff/added difference) "added"]
-                   [(diff/removed difference) "removed"]])                                                                    
-          (seq-to-edn (fn [key val]
-                        (if (diff/is-diff? val)
-                          [:li [:p key]
-                           (diff-tree val)]
-                          [:li [:p.changed key]
-                           [:ul
-                            [:li (str "previous : " (get val "prev"))]
-                            [:li (str "current : " (get val "cur"))]]]))
-                      (diff/changed difference))))
+  (concat-into [] [:ul]
+               (tree (diff/unchanged difference))
+               (mapcat #(apply tree-with-class %)
+                       [[(diff/added difference) "added"]
+                        [(diff/removed difference) "removed"]])                                                                   
+               (seq-to-edn (fn [key val]
+                             (if (diff/is-diff? val)
+                                [:li [:p key]
+                                 (diff-tree val)]
+                               [:li [:p.changed key]
+                                [:ul
+                                 [:li (str "previous : " (get val "prev"))]
+                                 [:li (str "current : " (get val "cur"))]]]))
+                           (diff/changed difference))))
 
 (defn edn-tree [difference]
-  (concat [:ul.tree]
-          (rest (diff-tree difference))))
+  (concat-into [] [:ul.tree]
+               (if (diff/is-diff? difference)
+                 (rest (diff-tree difference))
+                 (tree difference))))
 
 (defn definition-view-data [difference]
   (vector (diff/type difference)

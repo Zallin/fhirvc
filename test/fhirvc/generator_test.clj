@@ -51,8 +51,7 @@
 
 (deftest renders-edn-with-nesting-in-difference-structure
   (is (= (edn-tree with-nesting)
-         edn-with-nesting)))
-                      
+         edn-with-nesting)))                      
 
 (def with-nesting-in-added
   {"added" {"a" {"b" 2
