@@ -36,3 +36,9 @@
 
 (defn is-diff? [obj]
   (contains? obj "added"))
+
+(defn previous [obj]
+  (get obj "prev"))
+
+(defn current [obj]
+  (get obj "cur"))

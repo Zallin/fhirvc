@@ -4,38 +4,39 @@
             [config.core :refer [env]]
             [fhirvc.diff :as diff]))
 
-(defn primary-attrs [map]
-  (cond (contains? map "name") ["name"]
-        (contains? map "path") ["path"]
-        :else (keys map)))
+(defn get-type [o]
+  (if (contains? o "resourceType")
+    (get o "resourceType")
+    (get-in o ["resource" "resourceType"])))
 
-(defn has-attrs? [obj attrs]
-  (every? #(contains? obj %) attrs))
+(defmulti corresponds? (fn [a b] [(get-type a) (get-type b)]))                
 
-(defmulti corresponds? (fn [a b] [(type a) (type b)]))
-
-(defmethod corresponds? [clojure.lang.IPersistentMap clojure.lang.IPersistentMap] [a b]
-  (let [attrs (primary-attrs a)]
-    (if (has-attrs? b attrs)
-      (every? #(= (get a %) (get b %)) attrs)
-      false)))
+(defmethod corresponds? ["StructureDefinition" "StructureDefinition"] [a b]
+  (and (= (get a "name") (get b "name"))))
 
 (defmethod corresponds? :default [a b]
   (= a b))
-        
+
 (defn pairs-when [f source-a source-b]
   (for [a source-a
         b source-b
         :when (f a b)]
     [a b]))                    
 
+(defmulti coll-diff (fn [a b] [(type a) (type b)]))
+
+(defmethod coll-diff [clojure.lang.IPersistentVector clojure.lang.IPersistentVector] [a b]
+  (let [common (pairs-when corresponds? a b)]
+    (diff/create (into [] (difference (set b) (set (map second common))))
+                 (into [] (difference (set a) (set (map first common))))
+                 (map first (filter #(= (first %) (second %)) common))
+                 (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common)))))
+
 (defn props-filtered-on [f prop-set a b]
   (->> prop-set
        (map #(vector % (get a %) (get b %)))
        (filter #(f (second %) (nth % 2)))
        (map #(first %))))
-
-(defmulti coll-diff (fn [a b] [(type a) (type b)]))
 
 (defn changed-keys [keys a b]
   (loop [cur-keys keys
@@ -44,13 +45,6 @@
       acc
       (let [cur-key (first cur-keys)]
         (recur (rest cur-keys) (assoc acc cur-key (coll-diff (get a cur-key) (get b cur-key))))))))
-
-(defmethod coll-diff [clojure.lang.IPersistentVector clojure.lang.IPersistentVector] [a b]
-  (let [common (pairs-when corresponds? a b)]
-    (diff/create (into [] (difference (set b) (set (map second common))))
-                 (into [] (difference (set a) (set (map first common))))
-                 (map first (filter #(= (first %) (second %)) common))
-                 (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common)))))
 
 (defmethod coll-diff [clojure.lang.IPersistentMap clojure.lang.IPersistentMap] [a b]
   (let [keys-a (set (keys a))

@@ -31,62 +31,84 @@
                  views/version-comparison
                  (comparison-view-data comparison)))
 
+(defn vector-concat [& xs]
+  (into [] (apply concat xs)))
+
 (defn to-keyval-seq [seqable]
   (if (map? seqable)
     (seq seqable)
-    (map #(vector %1 %2) (range) seqable)))
+    (to-keyval-seq (into {}
+                        (map #(vector %1 %2)
+                             (range)
+                             seqable)))))
 
-(defn seq-to-edn [fun seqable]
-  (map (fn [[key val]]
-         (fun key val))
-       (to-keyval-seq seqable)))
+(defn update-path [path key]
+  (if (clojure.string/blank? path)
+    key
+    (str path "." key)))
 
-(defn concat-into [val & xs]
-  (into val
-        (apply concat xs)))
+(defn tree [obj]
+  (letfn [(inner [obj]
+            (vector-concat [:ul]
+                           (map (fn [[key val]]
+                                  (if (coll? val)
+                                    [:li [:p key]
+                                     (inner val)]
+                                    [:li [:p (str key " : " val)]]))
+                                (to-keyval-seq obj))))]
+    (vector-concat [:ul.tree]
+                   (rest (inner obj)))))
+                           
+(defn repr-with-prefix [path obj]
+  (loop [cur-seq (to-keyval-seq obj)
+         res []]
+    (if (empty? cur-seq)
+      res
+      (let [[key val] (first cur-seq)]        
+        (recur (rest cur-seq)
+               (conj res (if (coll? val)
+                           [:li (tree {(update-path path key) val})]                          
+                           [:li [:p (str (update-path path key) " : " val)]])))))))
 
-(defn tree [struct]
-  (seq-to-edn (fn [key val]
-                (if (coll? val)
-                  [:li [:p key]
-                   (concat-into [] [:ul] (tree val))]
-                  [:li [:p (str key " : " val)]]))
-              struct))
-
-(defn tree-with-class [difference class]
-  (seq-to-edn (fn [key val]
-                (if (coll? val)
-                  [:li [(keyword (str "p." class)) key]
-                   (concat-into [] [:ul] (tree val))]
-                  [:li [(keyword (str "p." class)) (str key " : " val)]]))
-              difference))
-
-(defn diff-tree [difference]
-  (concat-into [] [:ul]
-               (tree (diff/unchanged difference))
-               (mapcat #(apply tree-with-class %)
-                       [[(diff/added difference) "added"]
-                        [(diff/removed difference) "removed"]])                                                                   
-               (seq-to-edn (fn [key val]
-                             (if (diff/is-diff? val)
-                                [:li [:p key]
-                                 (diff-tree val)]
-                               [:li [:p.changed key]
-                                [:ul
-                                 [:li (str "previous : " (get val "prev"))]
-                                 [:li (str "current : " (get val "cur"))]]]))
-                           (diff/changed difference))))
-
-(defn edn-tree [difference]
-  (concat-into [] [:ul.tree]
-               (if (diff/is-diff? difference)
-                 (rest (diff-tree difference))
-                 (tree difference))))
-
+(defn html-diff-repr
+  ([difference]
+   (let [[added removed changed unchanged] (html-diff-repr difference "")]
+   [:div.row
+    (vector-concat [:ul
+             [:h4 "Added properties"]]
+            added)
+    (vector-concat [:ul
+             [:h4 "Removed properties"]]
+            removed)
+    (vector-concat [:ul
+             [:h4 "Changed properties"]]
+            changed)
+    (vector-concat [:ul
+             [:h4 "Unchanged properties"]]
+            unchanged)]))
+  
+  ([path difference]
+   (map vector-concat        
+        (reduce (fn [acc cur-val]
+                  (if (vec? cur-val)
+                    (let [[key val] cur-val]
+                      (if (diff/is-diff? val)
+                        (map vector-concat (html-diff-repr (update-path path key) val) acc)
+                        (update acc 2 #(conj % [:li [:p (update-path path key)]
+                                                [:ul
+                                                 [:li [:p (str "previous : " (diff/previous val))]]
+                                                 [:li [:p (str "current : " (diff/current val))]]]]))))
+                    (map vector-concat (html-diff-repr (update-path path "[]") cur-val) acc)))
+                (seq (diff/changed difference)))       
+        [(repr-with-prefix path (diff/added difference))
+         (repr-with-prefix path (diff/removed difference))
+         []
+         (repr-with-prefix path (diff/unchanged difference))]
+                                      
 (defn definition-view-data [difference]
   (vector (diff/type difference)
           (diff/name difference)
-          (edn-tree difference)))
+          (html-diff-repr difference)))
 
 (defn generate-definition-page [output-folder comparison difference]                                
   (generate-page (str output-folder "/" (comp/diff-ref comparison difference))
@@ -101,7 +123,7 @@
                 (reduce concat (diff/enumerate difference))))))                       
 
 (defn move-static-to [output-folder]
-  (copy-dir "resources/static/css" (str output-folder "/css")))
+  (copy-dir "resources/public" (str output-folder "/public")))
 
 (defn generate-site [output-folder comp-seq]
   (mkdir output-folder)

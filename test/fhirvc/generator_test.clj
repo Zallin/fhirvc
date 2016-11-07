@@ -1,6 +1,6 @@
 (ns fhirvc.generator-test
   (:require [clojure.test :refer :all]
-            [fhirvc.generator :refer [edn-tree tree-with-class]]))
+            [fhirvc.generator :refer [html-diff-repr]]))
 
 (def without-nesting {"added" {"a" "hello"
                                "b" "yes"}
@@ -11,17 +11,27 @@
                                    "f" "ball"}})
 
 (def edn-without-nesting
-  [:ul.tree
-   [:li [:p "e : well"]]
-   [:li [:p "f : ball"]]
-   [:li [:p.added "a : hello"]]
-   [:li [:p.added "b : yes"]]
-   [:li [:p.removed "c : no"]]
-   [:li [:p.changed "d"]
-    [:ul [:li "previous : val-1"] [:li "current : val-2"]]]])                        
-
+  [:div.row
+   [:ul
+    [:h4 "Added properties"]
+    [:li [:p "a : hello"]]
+    [:li [:p "b : yes"]]]
+   [:ul
+    [:h4 "Removed properties"]    
+    [:li [:p "c : no"]]]
+   [:ul
+    [:h4 "Changed properties"]    
+    [:li [:p "d"]
+     [:ul
+      [:li [:p "previous : val-1"]]
+      [:li [:p "current : val-2"]]]]]
+   [:ul
+    [:h4 "Unchanged properties"]
+    [:li [:p "e : well"]]
+    [:li [:p "f : ball"]]]])
+  
 (deftest renders-edn-without-nesting
-  (is (= (edn-tree without-nesting)
+  (is (= (html-diff-repr without-nesting)
          edn-without-nesting)))
   
 (def with-nesting
@@ -38,19 +48,25 @@
                                      "changed" {"f" {"prev" 1
                                                      "cur" 3}}}}}}})
   
-(def edn-with-nesting [:ul.tree
-                       [:li [:p "c"]                             
-                        [:ul
-                         [:li [:p "a : 1"]]
-                         [:li [:p "b : 2"]]
-                         [:li [:p "d"]
-                          [:ul
-                           [:li [:p "b : 2"]]
-                           [:li [:p.changed "f"]
-                            [:ul [:li "previous : 1"] [:li "current : 3"]]]]]]]])
-
+(def edn-with-nesting [:div.row
+                       [:ul
+                        [:h4 "Added properties"]]
+                       [:ul
+                        [:h4 "Removed properties"]]
+                       [:ul
+                        [:h4 "Changed properties"]
+                        [:li [:p "c.d.f"]
+                         [:ul
+                          [:li [:p "previous : 1"]]
+                          [:li [:p "current : 3"]]]]]
+                       [:ul
+                        [:h4 "Unchanged properties"]
+                        [:li [:p "c.a : 1"]]
+                        [:li [:p "c.b : 2"]]
+                        [:li [:p "c.d.b : 2"]]]])                            
+                       
 (deftest renders-edn-with-nesting-in-difference-structure
-  (is (= (edn-tree with-nesting)
+  (is (= (html-diff-repr with-nesting)
          edn-with-nesting)))                      
 
 (def with-nesting-in-added
@@ -61,21 +77,65 @@
    "unchanged" {}})
 
 (def edn-with-nesting-in-added
-  [:ul.tree
-   [:li [:p.added "a"]
-    [:ul
-     [:li [:p "b : 2"]]
-     [:li [:p "c"]
-      [:ul
-       [:li [:p "d : 3"]]]]]]])      
+  [:div.row
+   [:ul
+    [:h4 "Added properties"]
+    [:li
+     [:ul.tree
+      [:li [:p "a"]
+       [:ul
+        [:li [:p "b : 2"]]
+        [:li [:p "c"]
+         [:ul
+          [:li [:p "d : 3"]]]]]]]]]
+   [:ul
+    [:h4 "Removed properties"]]
+   [:ul
+    [:h4 "Changed properties"]]
+   [:ul
+    [:h4 "Unchanged properties"]]])
 
 (deftest renders-edn-with-nesting-in-added
-  (is (= (edn-tree with-nesting-in-added)
-         edn-with-nesting-in-added)))
-  
-(deftest extends-tree-when-hashmap-is-not-nested
-  (is (= (tree-with-class {"a" 3 "b" 4} "my-style")
-         [[:li [:p.my-style "a : 3"]]
-          [:li [:p.my-style "b : 4"]]])))
-          
-               
+  (is (= (html-diff-repr with-nesting-in-added)
+         edn-with-nesting-in-added)))               
+
+
+(def arr-diff
+  {"added" {}
+   "removed" {}
+   "unchanged" {}
+   "changed" {"a"  {"added" [{"a" {"b" 1}}]
+                    "removed" []
+                    "changed" [{"added" {}
+                                "removed" {}
+                                "changed" {"b" {"added" {}
+                                                "removed" {}
+                                                "changed" {"b" {"prev" 1
+                                                                "cur" 2}}
+                                                "unchanged" {}}}
+                                "unchanged" []}]}}})
+
+(def arr-diff-html
+  [:div.row
+   [:ul
+    [:h4 "Added properties"]
+    [:li
+     [:ul.tree
+      [:li [:p "a[X].a"]
+       [:ul
+        [:li [:p "b : 1"]]]]]]]      
+   [:ul
+    [:h4 "Removed properties"]]
+   [:ul
+    [:h4 "Changed properties"]
+    [:li [:p "a[X].a.b"]
+     [:ul
+      [:li [:p "previous : 1"]]
+      [:li [:p "current : 2"]]]]]          
+   [:ul
+    [:h4 "Unchanged properties"]]])
+
+(deftest renders-html-for-array-diff
+  (is (= (html-diff-repr arr-diff)
+         arr-diff-html)))
+    

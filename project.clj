@@ -9,8 +9,7 @@
                  [cheshire "5.6.3"]
                  [json-html "0.4.0"]
                  [me.raynes/fs "1.4.6"]
-                 [ring "1.5.0"]
-                 [lein-cljsbuild "1.1.4"]]                 
+                 [ring "1.5.0"]]                  
   :plugins [[lein-ring "0.9.7"]]
   :ring {:handler fhirvc.handler/app}
   :main fhirvc.core

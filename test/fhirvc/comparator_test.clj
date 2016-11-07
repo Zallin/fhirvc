@@ -88,13 +88,38 @@
   (is (corresponds? obj-1 obj-2)))
 
 
-(deftest finds-correspondence-between-strings
-  (is (corresponds? "abc" "abc")))
+(def obj-with-vec-a
+  {"a" [{"b" {"b" 1}
+         "resource" {"resourceType" "StructureDefinition"}
+         "name" "some"}]})
 
-(deftest returns-false-when-map-does-not-have-name-attr
-  (is (= (corresponds? {"prop" "val"} {"prop2" "val2"})
-         false)))
+(def obj-with-vec-b
+  {"a" [{"resource" {"resourceType" "StructureDefinition"}
+         "name" "other"
+         "a" {"b" 1}}        
+        {"resource" {"resourceType" "StructureDefinition"}
+         "name" "some"
+         "b" {"b" 2}}]})
+      
+(def vec-diff
+  {"added" {}
+   "removed" {}
+   "unchanged" {}
+   "changed" {"a"  {"added" [{"resource" {"resourceType" "StructureDefinition"}
+                              "name" "other"
+                              "a" {"b" 1}}]
+                    "removed" []
+                    "changed" [{"added" {}
+                                "removed" {}
+                                "changed" {"b" {"added" {}
+                                                "removed" {}
+                                                "changed" {"b" {"prev" 1
+                                                                "cur" 2}}
+                                                "unchanged" {}}}
+                                "unchanged" {"resource" {"resourceType" "StructureDefinition"}
+                                             "name" "some"}}]
+                    "unchanged" []}}})
 
-(deftest finds-correspondence-on-path-attr
-  (is (corresponds? {"path" 1} {"path" 1})
-      true))
+(deftest finds-diffs-between-objects-with-vectors
+  (is (= (coll-diff obj-with-vec-a obj-with-vec-b)
+         vec-diff)))

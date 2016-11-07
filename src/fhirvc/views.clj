@@ -8,18 +8,26 @@
 (defn append-pref [ref]
   (str (:path-prefix env) ref))
 
+
+
 (defn layout [title & cnt]
   (hc/html
    [:html
     [:head
      [:title title]
-     (page/include-css (append-pref "css/foundation.min.css") (append-pref "css/styles.css"))]
+     (page/include-css (append-pref "public/css/foundation.min.css")
+                       (append-pref "public/css/styles.css")
+                       "//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/style.min.css")]
     [:body
      [:div.top-bar
       [:div.top-bar-left
        [:ul.dropdown.menu
         [:li.menu-text "FHIR version comparator"]]]]
-     [:div cnt]]]))
+     [:div cnt]
+     (page/include-js "//code.jquery.com/jquery-3.1.1.min.js"
+                      "//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/jstree.min.js"
+                      (append-pref "public/js/script.js")
+                      (append-pref "public/js/jstree.min.js"))]]))
 
 (defn index [comp-seq]
   (layout "FHIRvc | Choose versions to compare"
