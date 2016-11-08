@@ -11,7 +11,7 @@
 (def cli-options
   [["-o", "--output DIR", "Output folder"
     :parse-fn #(trim %)
-    :default "dist/site"]])
+    :default "resources/site"]])
 
 (defn pairs [versions]
   (for [a versions
