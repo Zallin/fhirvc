@@ -4,18 +4,22 @@
             [config.core :refer [env]]
             [fhirvc.diff :as diff]))
 
-(defn get-type [o]
-  (if (contains? o "resourceType")
-    (get o "resourceType")
-    (get-in o ["resource" "resourceType"])))
+(defn contains-all? [obj & keys]
+  (every? (partial contains? obj) keys))
 
-(defmulti corresponds? (fn [a b] [(get-type a) (get-type b)]))                
+(defn primary-attributes [obj]
+  (cond (contains-all? obj "resourceType" "name") ["resourceType" "name"]
+        (contains? obj "path") ["path"]
+        (contains? obj "name") ["name"]
+        :else nil))
 
-(defmethod corresponds? ["StructureDefinition" "StructureDefinition"] [a b]
-  (and (= (get a "name") (get b "name"))))
-
-(defmethod corresponds? :default [a b]
-  (= a b))
+(defn corresponds? [a b]
+  (if (and (coll? a) (coll? b))
+    (let [pr-attrs (primary-attributes a)]
+      (if (nil? pr-attrs)
+        (= a b)
+        (every? #(= (get a %) (get b %)) pr-attrs)))
+    (= a b)))
 
 (defn pairs-when [f source-a source-b]
   (for [a source-a

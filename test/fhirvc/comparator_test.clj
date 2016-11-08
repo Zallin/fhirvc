@@ -78,16 +78,6 @@
   (is (= (coll-diff initial-nested-a initial-nested-b)
          res-with-nesting)))
 
-(deftest finds-correspondence-between-objs
-  (def obj-1 {"resource" {"resourceType" "StructureDefinition"}
-              "name" "first"
-              "prop-a" "val-a"})
-  (def obj-2 {"resource" {"resourceType" "StructureDefinition"}
-              "name" "first"
-              "prop-d" "val-c"})
-  (is (corresponds? obj-1 obj-2)))
-
-
 (def obj-with-vec-a
   {"a" [{"b" {"b" 1}
          "resource" {"resourceType" "StructureDefinition"}
@@ -123,3 +113,27 @@
 (deftest finds-diffs-between-objects-with-vectors
   (is (= (coll-diff obj-with-vec-a obj-with-vec-b)
          vec-diff)))
+
+(def el-def-1
+  {"path" "Device.id"
+   "short" "some text"
+   "min" 0
+   "max" 1})
+
+(def el-def-2
+  {"path" "Device.id"
+   "short" "some other text"
+   "min" 1
+   "max" 0})
+
+(deftest finds-correpondence-between-el-defs
+  (is (corresponds? el-def-1 el-def-2)))
+
+(deftest finds-correspondence-between-objs
+  (def obj-1 {"resourceType" "StructureDefinition"
+              "name" "first"
+              "prop-a" "val-a"})
+  (def obj-2 {"resourceType" "StructureDefinition"
+              "name" "first"
+              "prop-d" "val-c"})
+  (is (corresponds? obj-1 obj-2)))
