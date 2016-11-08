@@ -1,3 +1,11 @@
 li {
-    list-style-type: none !important
+    list-style-type: none !important;
+}
+
+.tree {
+    margin-left : 0;
+}
+
+.tree ul {
+    display : none;
 }
