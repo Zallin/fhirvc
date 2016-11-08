@@ -43,10 +43,10 @@
                              seqable)))))
 
 (defn update-path [path key]
-  (if (clojure.string/blank? path)
-    key
-    (str path "." key)))
-
+  (cond (clojure.string/blank? path) key
+        (= key "[]") (str path "[X]")
+        :else (str path "." key)))
+        
 (defn tree [obj]
   (letfn [(inner [obj]
             (vector-concat [:ul]
@@ -60,50 +60,49 @@
                    (rest (inner obj)))))
                            
 (defn repr-with-prefix [path obj]
-  (loop [cur-seq (to-keyval-seq obj)
-         res []]
-    (if (empty? cur-seq)
-      res
-      (let [[key val] (first cur-seq)]        
-        (recur (rest cur-seq)
-               (conj res (if (coll? val)
-                           [:li (tree {(update-path path key) val})]                          
-                           [:li [:p (str (update-path path key) " : " val)]])))))))
-
+  (reduce (fn [acc [key val]]
+            (conj acc
+                  (if (coll? val)
+                    [:li (tree {(update-path path key) val})]
+                    [:li [:p (str (update-path path key) " : " val)]])))
+          []
+          (to-keyval-seq obj)))
+                    
 (defn html-diff-repr
   ([difference]
-   (let [[added removed changed unchanged] (html-diff-repr difference "")]
-   [:div.row
-    (vector-concat [:ul
-             [:h4 "Added properties"]]
-            added)
-    (vector-concat [:ul
-             [:h4 "Removed properties"]]
-            removed)
-    (vector-concat [:ul
-             [:h4 "Changed properties"]]
-            changed)
-    (vector-concat [:ul
-             [:h4 "Unchanged properties"]]
-            unchanged)]))
+   (let [[added removed changed unchanged] (html-diff-repr "" difference)]
+     [:div.row
+      (vector-concat [:ul
+                      [:h4 "Added properties"]]
+                     added)
+      (vector-concat [:ul
+                      [:h4 "Removed properties"]]
+                     removed)
+      (vector-concat [:ul
+                      [:h4 "Changed properties"]]
+                     changed)
+      (vector-concat [:ul
+                      [:h4 "Unchanged properties"]]
+                     unchanged)]))
   
   ([path difference]
    (map vector-concat        
         (reduce (fn [acc cur-val]
-                  (if (vec? cur-val)
+                  (if (vector? cur-val)
                     (let [[key val] cur-val]
                       (if (diff/is-diff? val)
-                        (map vector-concat (html-diff-repr (update-path path key) val) acc)
-                        (update acc 2 #(conj % [:li [:p (update-path path key)]
+                        (map vector-concat acc (html-diff-repr (update-path path key) val))
+                        (update (vec acc) 2 #(conj % [:li [:p (update-path path key)]
                                                 [:ul
                                                  [:li [:p (str "previous : " (diff/previous val))]]
                                                  [:li [:p (str "current : " (diff/current val))]]]]))))
-                    (map vector-concat (html-diff-repr (update-path path "[]") cur-val) acc)))
-                (seq (diff/changed difference)))       
+                    (map vector-concat acc (html-diff-repr (update-path path "[]") cur-val))))
+                [[] [] [] []]
+                (seq (diff/changed difference)))
         [(repr-with-prefix path (diff/added difference))
          (repr-with-prefix path (diff/removed difference))
          []
-         (repr-with-prefix path (diff/unchanged difference))]
+         (repr-with-prefix path (diff/unchanged difference))])))
                                       
 (defn definition-view-data [difference]
   (vector (diff/type difference)

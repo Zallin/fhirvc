@@ -16,8 +16,7 @@
     [:head
      [:title title]
      (page/include-css (append-pref "public/css/foundation.min.css")
-                       (append-pref "public/css/styles.css")
-                       "//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/style.min.css")]
+                       (append-pref "public/css/styles.css"))]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -25,9 +24,7 @@
         [:li.menu-text "FHIR version comparator"]]]]
      [:div cnt]
      (page/include-js "//code.jquery.com/jquery-3.1.1.min.js"
-                      "//cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/jstree.min.js"
-                      (append-pref "public/js/script.js")
-                      (append-pref "public/js/jstree.min.js"))]]))
+                      (append-pref "public/js/script.js"))]]))
 
 (defn index [comp-seq]
   (layout "FHIRvc | Choose versions to compare"

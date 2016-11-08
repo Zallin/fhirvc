@@ -1,6 +1,6 @@
 (ns fhirvc.generator-test
   (:require [clojure.test :refer :all]
-            [fhirvc.generator :refer [html-diff-repr]]))
+            [fhirvc.generator :refer [html-diff-repr repr-with-prefix]]))
 
 (def without-nesting {"added" {"a" "hello"
                                "b" "yes"}
@@ -61,9 +61,9 @@
                           [:li [:p "current : 3"]]]]]
                        [:ul
                         [:h4 "Unchanged properties"]
+                        [:li [:p "c.d.b : 2"]]
                         [:li [:p "c.a : 1"]]
-                        [:li [:p "c.b : 2"]]
-                        [:li [:p "c.d.b : 2"]]]])                            
+                        [:li [:p "c.b : 2"]]]])                            
                        
 (deftest renders-edn-with-nesting-in-difference-structure
   (is (= (html-diff-repr with-nesting)
@@ -121,14 +121,16 @@
     [:h4 "Added properties"]
     [:li
      [:ul.tree
-      [:li [:p "a[X].a"]
+      [:li [:p "a.0"]
        [:ul
-        [:li [:p "b : 1"]]]]]]]      
+        [:li [:p "a"]
+         [:ul
+          [:li [:p "b : 1"]]]]]]]]]
    [:ul
     [:h4 "Removed properties"]]
    [:ul
     [:h4 "Changed properties"]
-    [:li [:p "a[X].a.b"]
+    [:li [:p "a[X].b.b"]
      [:ul
       [:li [:p "previous : 1"]]
       [:li [:p "current : 2"]]]]]          
@@ -139,3 +141,31 @@
   (is (= (html-diff-repr arr-diff)
          arr-diff-html)))
     
+
+(def map-without-nesting
+  {"a" 1
+   "b" 2})
+
+(def repr-for-map-without-nesting
+  [[:li [:p "a : 1"]]
+   [:li [:p "b : 2"]]])
+
+(deftest finds-representation-for-map-without-nesting
+  (is (= (repr-with-prefix "" map-without-nesting)
+         repr-for-map-without-nesting)))
+
+(def map-with-nesting
+  {"a" {"b" 3}
+   "c" 1})
+
+(def repr-for-map-with-nesting
+  [[:li
+    [:ul.tree
+     [:li [:p "a"]
+      [:ul
+       [:li [:p "b : 3"]]]]]]
+   [:li [:p "c : 1"]]])
+
+(deftest finds-representation-for-map-with-nesting
+  (is (= (repr-with-prefix "" map-with-nesting)
+         repr-for-map-with-nesting)))
