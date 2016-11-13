@@ -103,7 +103,8 @@
          (repr-with-prefix path (diff/removed difference))
          []
          (repr-with-prefix path (diff/unchanged difference))])))
-                                      
+
+; изменить то как отображаются 
 (defn definition-view-data [difference]
   (vector (diff/type difference)
           (diff/name difference)

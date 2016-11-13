@@ -1,6 +1,6 @@
 (defproject fhirvc "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "FHIR version comparison"
+  :url "zallin.github.io/fhirvc/"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.cli "0.3.5"]

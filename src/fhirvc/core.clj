@@ -1,6 +1,5 @@
 (ns fhirvc.core
-  (:require [clojure.tools.cli :refer [parse-opts]]
-            [config.core :refer [env]]
+  (:require [config.core :refer [env]]
             [cheshire.core :refer :all]
             [clojure.java.io :refer [file]]
             [fhirvc.comparator :refer [coll-diff]]
@@ -8,20 +7,12 @@
             [fhirvc.comp :as comp]
             [clojure.string :refer [trim]]))
 
-(def cli-options
-  [["-o", "--output DIR", "Output folder"
-    :parse-fn #(trim %)
-    :default "resources/site"]])
-
 (defn pairs [versions]
   (for [a versions
         b versions
         :while (not= a b)]
     [a b]))
 
-;; TODO
-;; filter directories
-;; read files with provided extensions
 (defn readdir [dir]
   (map slurp (rest (file-seq (file dir)))))
 
@@ -39,20 +30,26 @@
 (defn to-edn [pair]
   (update-seq :data #(map parse-string %) pair))
 
-(defn defs [pair]
+(defn definitions [pair]
   (update-seq :data #(into [] (map (fn [el] (get el "resource")) %))
               (update-seq :data #(mapcat (fn [cnt] (get cnt "entry")) %) pair)))
+
+(defn filter-defs-on [key val pair]
+  (map (fn [{:keys [name data]}]
+         {:name name
+          :data (into [] (filter #(= (get % key) val) data))})
+       pair))
                       
 (defn comparison [[a b]]
   (let [diff (coll-diff (:data b) (:data a))]
     (comp/create (:name a) (:name b) diff)))  
 
 (defn -main [& args]
-  (let [{options :options} (parse-opts args cli-options)]
-    (generate-site (:output options)
-                   (map (fn [pair]
-                          (->> (files pair)
-                               to-edn
-                               defs
-                               comparison))
-                        (pairs (:versions env))))))
+  (generate-site (:output-folder env) 
+                 (map (fn [pair]
+                        (->> (files pair)
+                             to-edn
+                             definitions
+                             (filter-defs-on "resourceType" "StructureDefinition")
+                             comparison))
+                      (pairs (:versions env)))))
