@@ -1,4 +1,6 @@
 $(function() {
+    $(document).foundation()
+
     $('.tree li > p').click(function (e){
 	e.preventDefault()
 	var childUl = $(this).parent().children('ul')

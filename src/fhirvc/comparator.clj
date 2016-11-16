@@ -33,8 +33,8 @@
   (let [common (pairs-when corresponds? a b)]
     (diff/create (into [] (difference (set b) (set (map second common))))
                  (into [] (difference (set a) (set (map first common))))
-                 (map first (filter #(= (first %) (second %)) common))
-                 (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common)))))
+                 (map #(coll-diff (first %) (second %)) (filter #(not= (first %) (second %)) common))
+                 (map first (filter #(= (first %) (second %)) common)))))
 
 (defn props-filtered-on [f prop-set a b]
   (->> prop-set
@@ -56,8 +56,8 @@
         common (intersection keys-a keys-b)]
     (diff/create (select-keys b (difference keys-b keys-a))
                  (select-keys a (difference keys-a keys-b))
-                 (select-keys a (props-filtered-on = common a b))
-                 (changed-keys (props-filtered-on not= common a b) a b))))
+                 (changed-keys (props-filtered-on not= common a b) a b)
+                 (select-keys a (props-filtered-on = common a b)))))
 
 (defmethod coll-diff :default [a b]
   {"prev" a "cur" b})

@@ -113,7 +113,7 @@
 (defn generate-definition-page [output-folder comparison difference]                                
   (generate-page (str output-folder "/" (comp/diff-ref comparison difference))
                  views/definition
-                 (definition-view-data difference)))
+                 difference))
 
 (defn generate-definition-pages [output-folder comparison]
   (let [difference (comp/diff comparison)

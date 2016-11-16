@@ -1,6 +1,6 @@
 (ns fhirvc.diff)
 
-(defn create [added removed unchanged changed]
+(defn create [added removed changed unchanged]
   {"added" added
    "removed" removed
    "unchanged" unchanged
