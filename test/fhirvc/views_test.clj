@@ -2,66 +2,90 @@
   (:require [clojure.test :refer :all]
             [fhirvc.views :refer :all]))
 
-(def without-nesting {"added" {"a" "hello"
-                               "b" "yes"}
-                      "removed" {"c" "no"}
-                      "changed" {"d" {"prev" "val-1"
-                                      "cur" "val-2"}}
-                      "unchanged" {"e" "well"
-                                   "f" "ball"}})
 
-(def with-nesting
-    {"added" {}
-     "removed" {}
-     "unchanged" {}
-     "changed" {"c" {"added" {}
-                     "removed" {}
-                     "unchanged" {"a" 1
-                                  "b" 2}
-                     "changed" {"d" {"added" {}
-                                     "removed" {}
-                                     "unchanged" {"b" 2}
-                                     "changed" {"f" {"prev" 1
-                                                     "cur" 3}}}}}}})
+(deftest generates-unchanged-keyval-pair
+  (is (= (map-diff-repr {"added" {}
+                          "removed" {}
+                          "changed" {}
+                          "unchanged" {"a" 1}})
+         [:ul
+          [:li [:p.unchanged "a : 1"]]])))
 
-(def with-nesting-in-added
-  {"added" {"a" {"b" 2
-                 "c" {"d" 3}}}
-   "removed" {}
-   "changed" {}
-   "unchanged" {}})
+(deftest generates-added-keyval-pair
+  (is (= (map-diff-repr {"added" {"a" 1}
+                          "removed" {}
+                          "changed" {}
+                          "unchanged" {}})
+         [:ul
+          [:li [:p.added "a : 1"]]])))
 
-(def arr-diff
-  {"added" {}
-   "removed" {}
-   "unchanged" {}
-   "changed" {"a"  {"added" [{"a" {"b" 1}}]
-                    "removed" []
-                    "changed" [{"added" {}
-                                "removed" {}
-                                "changed" {"b" {"added" {}
-                                                "removed" {}
-                                                "changed" {"b" {"prev" 1
-                                                                "cur" 2}}
-                                                "unchanged" {}}}
-                                "unchanged" []}]}}})
+(deftest generates-vector-diff-from-difference
+  (is (= (map-diff-repr {"added" {}
+                          "removed" {}
+                          "changed" {"a" {"added" [{"b" 2}]
+                                          "removed" [{"c" 3}]
+                                          "changed" []
+                                          "unchanged" [{"d" 4}]}}
+                          "unchanged" {}})
+         [:ul
+          [:li [:p.changed "a"]
+           [:ul.array 
+            [:li.array-el.added
+             [:li [:p.unchanged "b : 2"]]]
+            [:li.array-el.removed
+             [:li [:p.unchanged "c : 3"]]]
+            [:li.array-el.unchanged
+             [:li [:p.unchanged "d : 4"]]]]]])))
 
+(deftest generates-unchanged-vector-from-difference
+  (is (= (map-diff-repr {"added" {}
+                          "removed" {}
+                          "changed" {}
+                          "unchanged" {"a" [{"a" 1} {"b" 2}]}})
+         [:ul
+          [:li [:p.unchanged "a"]
+           [:ul.array 
+            [:li.array-el.unchanged
+             [:li [:p.unchanged "a : 1"]]]
+            [:li.array-el.unchanged
+             [:li [:p.unchanged "b : 2"]]]]]])))                                                             
 
-(def arr-diff
-  {"added" {}
-   "removed" {}
-   "unchanged" {}
-   "changed" {"a"  {"added" [{"a" {"b" 1}}]
-                    "removed" []
-                    "changed" [{"added" {}
-                                "removed" {}
-                                "changed" {"b" {"added" {}
-                                                "removed" {}
-                                                "changed" {"b" {"prev" 1
-                                                                "cur" 2}}
-                                                "unchanged" {}}}
-                                "unchanged" []}]}}})
+(deftest generates-added-vector-from-difference
+  (is (= (map-diff-repr {"added" {"a" [{"a" 1} {"b" 2}]}
+                          "removed" {}
+                          "changed" {}
+                          "unchanged" {}})
+         [:ul
+          [:li [:p.added "a"]
+           [:ul.array
+            [:li.array-el.unchanged
+             [:li [:p.unchanged "a : 1"]]]
+            [:li.array-el.unchanged
+             [:li [:p.unchanged "b : 2"]]]]]])))
 
+(deftest generates-tree-from-difference
+  (is (= (map-diff-repr {"added" {}
+                          "removed" {}
+                          "changed" {}
+                          "unchanged" {"a" {"b" 2
+                                            "c" 3}}})
+         [:ul
+          [:li [:p.unchanged "a"]
+           [:ul.tree
+            [:li [:p "b : 2"]]
+            [:li [:p "c : 3"]]]]])))
+
+(deftest generates-changed-key-val-from-difference
+  (is (= (map-diff-repr {"added" {}
+                          "removed" {}
+                          "changed" {"a" {"prev" 1
+                                          "cur" 2}}
+                          "unchanged" {}})
+         [:ul
+          [:li [:p.changed "a"]
+           [:ul
+            [:li "previous : 1"]
+            [:li "current : 2"]]]])))             
 
 (deftest finds-metadata
   (is (= (metadata {"a" 1 "b" {"a" 1} "c" [{"a" 1}]

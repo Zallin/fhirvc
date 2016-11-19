@@ -15,7 +15,7 @@
     [:head
      [:title title]
      (page/include-css (prefix "css/foundation.css")
-                       (prefix "css/styles.css"))]
+                       (prefix "css/app.css"))]
     [:body
      [:div.top-bar
       [:div.top-bar-left
@@ -71,6 +71,12 @@
          (diff/unchanged def)
          def)
        "name"))
+
+(defn el-name [element-def]
+  (get (if (diff/is-diff? element-def)
+         (diff/unchanged element-def)
+         element-def)
+       "path"))         
                      
 (defn metadata [def]
   (if (diff/is-diff? def)
@@ -78,43 +84,122 @@
                             (diff/enumerate def)))
     (dissoc def "snapshot" "differential")))
 
+(defn base-property [def & keys]
+  (let [changed-in-def (diff/changed def)]
+    (if-let [property-val (get-in changed-in-def keys)]
+      property-val
+      (get-in (diff/unchanged def) keys))))      
+
 (defn snapshot [def]
-  (let [changed-in-def (diff/changed def)]    
-    (if (contains? changed-in-def "snapshot")
-      (get (diff/changed (get changed-in-def "snapshot")) "element")
-      (diff/create [] [] [] (get-in (diff/unchanged def) ["snapshot" "element"])))))
+  (base-property def "snapshot" "element"))
 
-(defn differential [def])
+(defn differential [def]
+  (base-property def "differential" "element"))
 
-(defn html-repr [difference])
+(defn vector-concat [& xs]
+  (into [] (apply concat xs)))
+
+(defn to-keyval-seq [seqable]
+  (if (map? seqable)
+    (seq seqable)
+    (to-keyval-seq (into {}
+                        (map #(vector %1 %2)
+                             (range)
+                             seqable)))))
+
+(declare vector-diff-repr
+         map-diff-repr
+         iterate-over)
+
+(defn tree-repr [hm]
+  (letfn [(inner [obj]
+            (vector-concat [:ul]
+                           (map (fn [[key val]]
+                                  (if (coll? val)
+                                    [:li [:p key]
+                                     (inner val)]
+                                    [:li [:p (str key " : " val)]]))
+                                (to-keyval-seq obj))))]
+    (vector-concat [:ul.tree]
+                   (rest (inner hm)))))
+
+(defn vector-repr
+  ([vec] (vector-repr vec "unchanged"))
+  ([vec class]
+   (map (fn [val]
+          [(keyword (str "li.array-el." class))
+           (vector-concat [:ul]
+                          (cond (and (coll? val) (diff/is-diff? val)) (map-diff-repr val)
+                                (coll? val) (iterate-over val "unchanged")
+                                :else val))])
+        vec)))
+
+(defn iterate-over [obj class]
+  (reduce (fn [acc [key val]]
+               (conj acc 
+                     (cond (coll? val) [:li [(keyword (str "p." class)) key]
+                                        (if (map? val)
+                                          (tree-repr val)
+                                          (vector-concat [:ul.array] (vector-repr val)))]                                        
+                           :else [:li [(keyword (str "p." class)) (str key " : " val)]])))
+          []
+          (seq obj)))
+
+(defn map-repr [hm]
+  (vector-concat [:ul]
+                 (iterate-over hm "unchanged")))
+
+(defn vector-diff-repr [vector-difference]
+  (vector-concat [:ul.array]
+                 (vector-repr (diff/added vector-difference) "added")
+                 (vector-repr (diff/removed vector-difference) "removed")
+                 (vector-repr (diff/changed vector-difference) "changed")
+                 (vector-repr (diff/unchanged vector-difference) "unchanged")))
+
+(defn map-diff-repr [difference]
+  (vector-concat [:ul]
+                  (iterate-over (diff/added difference) "added")
+                  (iterate-over (diff/removed difference) "removed")
+                  (reduce (fn [acc [key val]]
+                            (conj acc
+                                  (cond (diff/is-diff? val) [:li [:p.changed key]
+                                                             (if (map? (diff/added val))
+                                                               (map-diff-repr val)
+                                                               (vector-diff-repr val))]                                 
+                                        (map? val)
+                                        [:li [:p.changed key]
+                                         [:ul
+                                          [:li (str "previous : " (get val "prev"))]
+                                          [:li (str "current : " (get val "cur"))]]])))
+                          []
+                          (diff/changed difference))
+                  (iterate-over (diff/unchanged difference) "unchanged")))
 
 (defn accordion-item [title cnt]
   [:li.accordion-item {:data-accordion-item ""}
    [:a.accordion-title {:href "#"} title]
    [:ul.accordion-content.element-definition {:data-tab-content ""} cnt]])       
 
-(defn accordion-items-for [element-defs]
-  (map (fn [element-def]
-         ;; CHANGE!!!
-         (let [name (get element-def "path")]
-           (accordion-item name
-                           (html-repr element-def))))
+(defn accordion-items-for [repr-fun element-defs]
+  (map (fn [element-def]             
+           (accordion-item (el-name element-def)
+                           (repr-fun element-def)))
        element-defs))
 
 (defn difference-as-accordion [difference]
   (let [[added removed changed unchanged] (diff/enumerate difference)]
-    [[:h4.def-header "Added definitions"]
-     [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-      (accordion-items-for added)]
-     [:h4.def-header "Removed definitions"]
-     [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-      (accordion-items-for removed)]
-     [:h4.def-header "Changed definitions"]
-     [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-      (accordion-items-for changed)]
-     [:h4.def-header "Unchanged definitions"]
-     [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-      (accordion-items-for unchanged)]]))
+    [[:h4.def-header "Added element definitions"]
+     (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                    (accordion-items-for map-repr added))
+     [:h4.def-header "Removed element definitions"]
+     (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                    (accordion-items-for map-repr removed))
+     [:h4.def-header "Changed element definitions"]
+     (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                    (accordion-items-for map-diff-repr changed))
+     [:h4.def-header "Unchanged element definitions"]
+     (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                    (accordion-items-for map-repr unchanged))]))
                
 (defn definition [def]
   (layout "FHIRvc | Definition"
@@ -130,20 +215,22 @@
             [:li.tabs-title
              [:a {:href "#panel3"} "Differential"]]]
            [:div.tabs-content {:data-tabs-content "example-tabs"}
-            [:div#panel1.tabs-panel.is-active                         
-             (html-repr (metadata def))]
+            [:div#panel1.tabs-panel.is-active
+             (if (diff/is-diff? def)
+               (map-diff-repr (metadata def))
+               (map-repr (metadata def)))]
             (if (diff/is-diff? def)
-              (concat [:div#panel2.tabs-panel]
-                      (difference-as-accordion (snapshot def)))             
+              (vector-concat [:div#panel2.tabs-panel]
+                             (difference-as-accordion (snapshot def)))
               [:div#panel2.tabs-panel
-               [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-                (accordion-items-for (get-in def ["snapshot" "element"]))]])
+               (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                              (accordion-items-for map-repr (get-in def ["snapshot" "element"])))])
             (if (diff/is-diff? def)           
-              (concat [:div#panel3.tabs-panel]
-                      (difference-as-accordion (differential def)))
+              (vector-concat [:div#panel3.tabs-panel]
+                             (difference-as-accordion (differential def)))
               [:div#panel3.tabs-panel
-               [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}
-                (accordion-items-for (get-in def ["differential" "element"]))]])]]))
+               (vector-concat [:ul.accordion {:data-accordion "" :data-multi-expand "true" :data-allow-all-closed "true"}]
+                              (accordion-items-for map-repr (get-in def ["differential" "element"])))])]]))
 
 
 
