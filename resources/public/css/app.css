@@ -9,11 +9,11 @@ p {
 }
 
 .added {
-    border-left: 3px solid #45f442;
+    border-left: 3px solid #45f442 !important;
 }
 
 .removed {
-    border-left: 3px solid #f44b42;
+    border-left: 3px solid #f44b42 !important;
 }
 
 .changed {
