@@ -1,5 +1,5 @@
 (ns fhirvc.views
-  (:require [fhirvc.diff :as diff]
+  (:require [fhirvc.structure-diff :as diff]
             [hiccup.core :as hc]
             [hiccup.page :as page]
             [clojure.string :refer [lower-case]]

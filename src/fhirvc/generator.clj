@@ -1,7 +1,7 @@
 (ns fhirvc.generator
   (:require [fhirvc.views :as views]
-            [fhirvc.diff :as diff]
-            [fhirvc.comp :as comp]
+            [fhirvc.structure-diff :as diff]
+            [fhirvc.fhir-comparison :as comp]
             [me.raynes.fs :refer [copy-dir mkdir]]))
 
 (defn generate-page

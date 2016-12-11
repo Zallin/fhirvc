@@ -2,9 +2,9 @@
   (:require [config.core :refer [env]]
             [cheshire.core :refer :all]
             [clojure.java.io :refer [file]]
-            [fhirvc.comparator :refer [coll-diff]]
+            [fhirvc.structure-differ :refer [coll-diff]]
             [fhirvc.generator :refer [generate-site]]
-            [fhirvc.comp :as comp]
+            [fhirvc.fhir-comparison :as comp]
             [clojure.string :refer [trim]]))
 
 (defn pairs [versions]

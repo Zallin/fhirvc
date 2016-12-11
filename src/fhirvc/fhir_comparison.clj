@@ -1,6 +1,6 @@
-(ns fhirvc.comp
+(ns fhirvc.fhir-comparison
   (:require [clojure.string :as str]
-            [fhirvc.diff :as diff]))
+            [fhirvc.structure-diff :as diff]))
 
 (defn create [name-a name-b diff]
   {"version-a" name-a

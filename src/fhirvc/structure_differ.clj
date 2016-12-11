@@ -1,8 +1,8 @@
-(ns fhirvc.comparator
+(ns fhirvc.structure-differ
   (:require [clojure.set :refer [intersection difference]]
             [cheshire.core :refer :all]
             [config.core :refer [env]]
-            [fhirvc.diff :as diff]))
+            [fhirvc.structure-diff :as diff]))
 
 (defn contains-all? [obj & keys]
   (every? (partial contains? obj) keys))

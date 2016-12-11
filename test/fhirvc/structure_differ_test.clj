@@ -1,6 +1,6 @@
-(ns fhirvc.comparator-test
+(ns fhirvc.structure-differ-test
   (:require [clojure.test :refer :all]
-            [fhirvc.comparator :refer :all]))
+            [fhirvc.structure-differ :refer :all]))
 
 (def initial-a
   [{"resource" {"resourceType" "StructureDefinition"}
