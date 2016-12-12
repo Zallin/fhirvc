@@ -41,8 +41,10 @@
           (unchanged diff))))
 
 (defn is-diff? [obj]
-  (or (contains? obj "prev")
-      (contains? obj "added")))
+  (if (coll? obj)  
+    (or (contains? obj "prev")
+        (contains? obj "added"))
+    false))
 
 (defn previous [obj]
   (get obj "prev"))
