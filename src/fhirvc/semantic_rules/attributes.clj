@@ -39,3 +39,31 @@
                 
                 
 
+(defn cardinality-change [eldef]
+  (list (if-changed eldef ["min"]
+                    (fn [def-name min-value]
+                      (sem-diff/create :priority 1
+                                       :name def-name
+                                       :text (str "Min cardinality changed from "
+                                                  (struct-diff/previous min-value)
+                                                  " to "
+                                                  (struct-diff/current min-value)))))
+        (if-changed eldef ["max"]
+                    (fn [def-name max-value]
+                      (sem-diff/create :priority 1
+                                       :name def-name
+                                       :text (str "Max cardinality changed from "
+                                                  (struct-diff/previous max-value)
+                                                  " to "
+                                                  (struct-diff/current max-value)))))))
+                          
+
+(defn short-definition-change [eldef]
+  (if-changed eldef ["short"]                     
+              (fn [def-name short-value]
+                (sem-diff/create :priority 3
+                                 :name def-name
+                                 :text (str "Definition for xml presentation changed from "
+                                            (struct-diff/previous short-value)
+                                            " to "
+                                            (struct-diff/current short-value))))))
