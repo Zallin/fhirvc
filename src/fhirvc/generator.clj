@@ -2,6 +2,7 @@
   (:require [fhirvc.views :as views]
             [fhirvc.structure-diff :as diff]
             [fhirvc.fhir-comparison :as comp]
+            [fhirvc.semantic-differ :as sem-diff]
             [me.raynes.fs :refer [copy-dir mkdir]]))
 
 (defn generate-page
@@ -34,7 +35,8 @@
 (defn generate-definition-page [output-folder comparison difference]                                
   (generate-page (str output-folder "/" (comp/diff-ref comparison difference))
                  views/definition
-                 difference))
+                 [(diff/get-property difference "name")
+                  (sem-diff/diff difference)]))
 
 (defn generate-definition-pages [output-folder comparison]
   (let [difference (comp/diff comparison)
