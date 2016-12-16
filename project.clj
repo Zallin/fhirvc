@@ -9,8 +9,11 @@
                  [json-html "0.4.0"]
                  [me.raynes/fs "1.4.6"]
                  [ring "1.5.0"]
-                 [hickory "0.7.0"]]                  
-  :plugins [[lein-ring "0.9.7"]]
+                 [hickory "0.7.0"]
+                 [environ "1.1.0"]]
+  :plugins [[lein-ring "0.9.7"]
+            [lein-environ "1.1.0"]]
   :ring {:handler fhirvc.handler/app}
   :main fhirvc.core
-  :profiles {:dev {:dependencies [[im.chit/vinyasa "0.4.7"]]}})       
+  :profiles {:dev {:env {:views-path-prefix "/"}}
+             :test {:env {:views-path-prefix "/fhirvc/"}}})
