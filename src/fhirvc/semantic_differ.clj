@@ -3,6 +3,7 @@
 
 (defn init-semantic-rules [name]
   (let [ns-name (symbol (str "fhirvc.semantic-rules." name))]
+    (require ns-name)
     (map #(ns-resolve ns-name %)
          (keys (ns-publics ns-name))))) 
 

@@ -21,9 +21,7 @@
     (map #(str/replace % "_" " ") names)))
 
 (defn ref [comp]
-  (let [a (first-name comp)
-        b (second-name comp)]        
-    (str a "_" b  "_page.html")))
+
 
 (defn folder [comp]
   (str/replace (ref comp) "_page.html" ""))

@@ -1,7 +1,6 @@
 (ns fhirvc.structure-differ
   (:require [clojure.set :refer [intersection difference]]
             [cheshire.core :refer :all]
-            [config.core :refer [env]]
             [fhirvc.structure-diff :as diff]))
 
 (defn contains-all? [obj & keys]
