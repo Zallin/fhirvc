@@ -1,6 +1,5 @@
 (ns fhirvc.handler
-  (:require [config.core :refer [env]]
-            [ring.middleware.resource :refer [wrap-resource]]
+  (:require [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.content-type :refer [wrap-content-type]]
             [ring.util.response :refer [redirect]]
             [me.raynes.fs :refer [base-name]]))
@@ -12,7 +11,7 @@
      :status 404}))
 
 (defn resource-folder-path []
-  (base-name (:output-folder env)))
+  (base-name "resources/site"))
 
 (def app
   (-> redirect-handler
