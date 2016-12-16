@@ -16,4 +16,4 @@
   :ring {:handler fhirvc.handler/app}
   :main fhirvc.core
   :profiles {:dev {:env {:views-path-prefix "/"}}
-             :test {:env {:views-path-prefix "/fhirvc/"}}})
+             :prod {:env {:views-path-prefix "/fhirvc/"}}})
