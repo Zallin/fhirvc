@@ -1,3 +1,7 @@
+ul {
+    margin-left: 0;
+}
+
 li {
     list-style-type: none;
     margin: 5px 0 5px 0;
@@ -6,6 +10,12 @@ li {
 p {
     margin-bottom: 0;
     padding-left: 7px;
+    font-size: 14px;
+}
+
+.name {
+    font-size: 15px;
+    border-bottom: 1px solid rgba(10, 10, 10, 0.25);
 }
 
 .added {
@@ -46,22 +56,6 @@ li > .callout {
 .element-definition {
     font-size : 14px;
 }
-
-#panel1 > ul > li {
-    position: relative;
-    margin-bottom: 10px;
-}
-
-#panel1 > ul > li:before {
-      content : "";
-      position: absolute;
-      left    : 0;
-      bottom  : 0;
-      height  : 1px;
-      width   : 20%;
-      border-bottom: 1px dashed #bbcce8;
-}
-    
 
 /* copied from
 http://cssdeck.com/labs/pure-css-tree-menu-framework
