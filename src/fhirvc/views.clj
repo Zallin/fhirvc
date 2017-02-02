@@ -1,6 +1,5 @@
 (ns fhirvc.views
   (:require [fhirvc.structure-diff :as struct-diff]
-            [fhirvc.semantic-diff :as sem-diff]
             [fhirvc.filenames :as filenames]
             [hiccup.core :as hc]
             [hiccup.page :as page]
@@ -64,18 +63,18 @@
                           [:a {:href (filenames/def-in-comparison comparison [name sem-diffs])} name])
                         (:semantic-difference comparison)))]))
 
-(defmulti semantic-change (fn [diff] (sem-diff/text diff)))
+(defmulti semantic-change (fn [diff] (:text diff)))
 
 (defmethod semantic-change "added" [diff]
-  [:li [:p.added (sem-diff/name diff)]])
+  [:li [:p.added (:name diff)]])
 
 (defmethod semantic-change "removed" [diff]
-  [:li [:p.removed (sem-diff/name diff)]])
+  [:li [:p.removed (:name diff)]])
 
 (defmethod semantic-change :default [diff]
   [:li
-   [:p.name (sem-diff/name diff)]
-   [:p (sem-diff/text diff)]])
+   [:p.name (:name diff)]
+   [:p (:text diff)]])
 
 (defn semantic-changes-section [name diffs]
   [:div.large-4.medium-4.columns
@@ -85,9 +84,9 @@
                  (map #(semantic-change %) diffs)))])
 
 (defn definition [[name sem-diffs]]
-  (let [tier-1 (filter #(= (sem-diff/priority %) 1) sem-diffs)
-        tier-2 (filter #(= (sem-diff/priority %) 2) sem-diffs)
-        tier-3 (filter #(= (sem-diff/priority %) 3) sem-diffs)]
+  (let [tier-1 (filter #(= (:priority %) 1) sem-diffs)
+        tier-2 (filter #(= (:priority %) 2) sem-diffs)
+        tier-3 (filter #(= (:priority %) 3) sem-diffs)]
     (layout "FHIRvc | Definition semantic difference"
             [:div.row
              [:h3 (str "Resource Name: " name)]]

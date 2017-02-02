@@ -29,8 +29,8 @@
   (is (= (is-diff? {"hello" "well?" "this is" "dog"})
          false)))
 
-(deftest dissocs-properties
-  (is (= (dissoc-properties {"added" {"a" 1}
+(deftest dissocs-keys
+  (is (= (dissoc-keys {"added" {"a" 1}
                              "removed" {"b" 2
                                         "c" 3}
                              "changed" {"d" {"prev" 1
@@ -45,8 +45,8 @@
                           "cur" 2}}
           "unchanged" {}})))
 
-(deftest dissocs-single-property
-  (is (= (dissoc-property {"added" {"a" 5
+(deftest dissocs-single-key
+  (is (= (dissoc-key {"added" {"a" 5
                                     "b" 6}
                            "removed" {}
                            "changed" {}
@@ -57,23 +57,23 @@
           "changed" {}
           "unchanged" {}})))
 
-(deftest gets-properties-in-depth
-  (is (= (get-properties {"added" {}
-                          "removed" {}
-                          "changed" {"a" {"added" {"b" 3}
-                                          "removed" {}
-                                          "changed" {}
-                                          "unchanged" {}}}
-                          "unchanged" {}}
-                         "a" "b")
+(deftest gets-vals-in-depth
+  (is (= (get-vals {"added" {}
+                    "removed" {}
+                    "changed" {"a" {"added" {"b" 3}
+                                    "removed" {}
+                                    "changed" {}
+                                    "unchanged" {}}}
+                    "unchanged" {}}
+                   "a" "b")
          3)))
 
                    
-(deftest gets-single-property
-  (is (= (get-property {"added" {"a" 1}
-                        "removed" {}
-                        "changed" {}
-                        "unchanged" {}}
-                       "a")
+(deftest gets-single-val
+  (is (= (get-val {"added" {"a" 1}
+                   "removed" {}
+                   "changed" {}
+                   "unchanged" {}}
+                  "a")
          1)))
          

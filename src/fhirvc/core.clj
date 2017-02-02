@@ -1,7 +1,7 @@
 (ns fhirvc.core
-  (:require [fhirvc.structure-differ :refer [coll-diff]]
+  (:require [fhirvc.structure :as structure]
             [fhirvc.structure-diff :as struct-diff]
-            [fhirvc.semantic-differ :as sem-diff]
+            [fhirvc.semantics :as semantics]
             [fhirvc.generator :refer [generate-site]]
             [cheshire.core :refer :all]                        
             [me.raynes.fs :as fs]))
@@ -33,13 +33,13 @@
 (defn structure-difference [[a b]]
   {:old-version (:name a)
    :new-version (:name b)
-   :structure-difference (coll-diff (:data a) (:data b))})
+   :structure-difference (structure/diff (:data a) (:data b))})
 
 (defn semantic-difference [comparison]  
   (assoc comparison
          :semantic-difference (map (fn [str-def]
-                                     [(struct-diff/get-property str-def "name")
-                                      (sem-diff/diff str-def)])
+                                     [(struct-diff/get-val str-def "name")
+                                      (semantics/diff str-def)])
                                    (struct-diff/changed (:structure-difference comparison)))))
 
 (defn -main [& args]

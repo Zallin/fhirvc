@@ -1,31 +1,32 @@
 (ns fhirvc.semantic-rules.structure
   (:require [clojure.string :as str]
-            [fhirvc.structure-diff :as struct-diff]
-            [fhirvc.semantic-diff :as sem-diff]))
+            [fhirvc.structure-diff :as struct-diff]))
 
 (defn- element-definition-addition [eldefs]
   (map (fn [eldef]
-         (sem-diff/create :priority 1
-                          :name (get eldef "path")
-                          :text "added"))
+         {:priority 1
+          :name (get eldef "path")
+          :text "added"})
        eldefs))
 
 (defn- element-definition-removal [eldefs]
   (map (fn [eldef]
-         (sem-diff/create :priority 1
-                          :name (get eldef "path")
-                          :text "removed"))
+         {:priority 1
+          :name (get eldef "path")
+          :text "removed"})
        eldefs))
 
 (defn- element-definition-renaming [eldefs]
   (map (fn [[a b]]
          (let [old-name (get a "path")
                new-name (get b "path")]
-             (sem-diff/create :priority 1
-                              :name new-name
-                              :text (str "Renamed from " old-name " to " new-name))))
+             {:priority 1
+              :name new-name
+              :text (str "Renamed from " old-name " to " new-name)}))
        eldefs))
-         
+
+;; move to semantics.clj
+
 (defn- was-renamed [old new]
   (let [old-name (get old "path")
         new-name (get new "path")]
@@ -37,9 +38,6 @@
         r (struct-diff/removed eldefs)
         :when (was-renamed r a)]
     [r a]))
-
-(renamed-definitions {"added" [{"path" "a"}]
-                      "removed" [{"path" "ab"}]})
 
 (defn structure-change [eldefs]
   (let [renamed (renamed-definitions eldefs)

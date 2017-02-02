@@ -52,21 +52,22 @@
 (defn current [obj]
   (get obj "cur"))
 
-(defn get-property [struct-diff prop]
-  (first (remove nil?
-                 (map #(get % prop)
-                      (enumerate struct-diff)))))
+(defn get-val [struct-diff key]
+  (->> (enumerate struct-diff)
+       (map #(get % key))
+       (remove nil?)
+       first))
 
-(defn get-properties [struct-diff & props]
+(defn get-vals [struct-diff & ks]
   (reduce (fn [r p]
             (if (is-diff? r)
-              (get-property r p)
+              (get-val r p)
               (get r p)))
           struct-diff
-          props))
+          ks))
 
-(defn dissoc-property [struct-diff prop]
-  (apply create (map #(dissoc % prop) (enumerate struct-diff))))
+(defn dissoc-key [struct-diff k]
+  (apply create (map #(dissoc % k) (enumerate struct-diff))))
 
-(defn dissoc-properties [struct-diff & props]
-  (reduce (fn [m p] (dissoc-property m p)) struct-diff props))
+(defn dissoc-keys [struct-diff & ks]
+  (reduce (fn [m p] (dissoc-key m p)) struct-diff ks))
