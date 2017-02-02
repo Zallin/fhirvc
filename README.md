@@ -10,9 +10,9 @@ You will need [Leiningen][] 2.0.0 or above installed.
 
 ## Running
 
-To generate static site, run:
+To generate site, run:
 
-    lein run -o [static site folder]
+    lein run 
 
 Note that by default site generates to resources/site folder.
 
